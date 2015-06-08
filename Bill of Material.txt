@@ -1,7 +1,7 @@
 SdBrowse_Ethernet_HTTPServer Project, Bill of Material
 
-1	Arduino Mega 2560 compatiable board										$12.70
-1	Arduino Ethernet Shield with SD Microslot, R3 Mega compatiable		    $19.79	
+1	Arduino Mega 2560 compatiable board					12.70
+1	Arduino Ethernet Shield with SD Microslot, R3 Mega compatiable		$19.79	
 1	Adafruit DS1307 Real Time Clock breakout board kit                      $ 9.00
 1	BMP085 (model GY-65, 5 volt,) Barometric Pressure sensor                $ 5.70
 1	DHT22 Humidity with Tenperature sensing, sensor                         $ 5.87
@@ -9,5 +9,5 @@ SdBrowse_Ethernet_HTTPServer Project, Bill of Material
 1	Misc., Hookup wire
 
 	Hint:  Search Ebay.com                                                                       
-                                                                          ________
-																		    $53.06
+                                                                               ________
+																		                                                                         $53.06
