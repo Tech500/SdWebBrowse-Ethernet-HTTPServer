@@ -1,8 +1,8 @@
 /***************************************************
 
   ■   SDWebBrowse_Ethernet_WEBServer.ino    ■
-  ■   Using Arduino Mega 2560 --Rev. 1.0    ■
-  ■   Last modified 05/04/2015 @ 10:36EST   ■
+  ■   Using Arduino Mega 2560 --Rev. 5.0    ■
+  ■   Last modified 06/08/2015 @ 17:12 EST  ■
   ■   Ethernet Shield version               ■
   
   ■ Modified by "Tech500" with the          ■ 
@@ -22,7 +22,7 @@
 #include <SdFile.h>   //https://github.com/greiman/SdFat
 #include <SdFatUtil.h>   //https://github.com/greiman/SdFat
 #include <Ethernet.h>   http://arduino.cc/en/Main/Software  included in Arduino IDE download
-#include <EthernetClient.h>
+#include <EthernetClient.h>   http://arduino.cc/en/Main/Software  included in Arduino IDE download
 #include <Wire.h>    //  http://arduino.cc/en/Main/Software  included in Arduino IDE download
 #include <BMP085.h>      // http://code.google.com/p/bmp085driver/
 #include <DHT.h>   //https://github.com/adafruit/DHT-sensor-library
@@ -86,6 +86,7 @@ float difference;
 long int id = 1;  //Increments record number
 
 String dtStamp;
+String lastUpdate;
 String SMonth, SDay, SYear, SHour, SMin, SSec;
 
 // Enter a MAC address and IP address for your controller below.
@@ -97,10 +98,10 @@ IPAddress ip(192,168,1,71);
 // Initialize the Ethernet server library
 // with the IP address and port you want to use 
 // (port 80 is default for HTTP):
-EthernetServer server(8889);
+EthernetServer server(7388);
 
 
-#define LISTEN_PORT           8889    // What TCP port to listen on for connections.  
+#define LISTEN_PORT           7388    // What TCP port to listen on for connections.  
                                       // The HTTP protocol uses port 80 by default.
 
 #define MAX_ACTION            10      // Maximum length of the HTTP action that can be parsed.
@@ -151,6 +152,8 @@ void error_P(const char* str) {
 void setup(void)
 {
 	Serial.begin(115200);
+	
+	sd.begin(chipSelect);
 
 	if (!sd.begin(SPI_HALF_SPEED, chipSelect)) sd.initErrorHalt();
 	
@@ -194,7 +197,10 @@ void setup(void)
 	server.begin();
 	
 	Serial.print("server is at ");
-	Serial.println(Ethernet.localIP());	
+	Serial.print(Ethernet.localIP());
+	Serial.print("  Port:  ");
+	Serial.print(LISTEN_PORT);
+	Serial.println("");
 
 
     getDateTime();
@@ -338,6 +344,8 @@ void loop()
 
         getDateTime();
 		
+		lastUpdate = dtStamp;
+		
 		getDHT22();
 
         getBMP085();
@@ -379,65 +387,90 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
 	else
 	{
 	
-		// Open a "log.txt" for appended writing
-		SdFile logFile;
-			logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
-		if (!logFile.isOpen()) error("log");
-				
-    
-			
-		//logFile.print(id);
-		//logFile.print(" , ");
-		logFile.print(dtStamp) + " EST";
-		logFile.print(" , ");
-		logFile.print("Humidity:  ");
-		logFile.print(h);
-		logFile.print(" % , ");
-		logFile.print("Dew point:  ");
-		dP=(dewPointFast(t, h));
-		dPF=((dP*9)/5)+32;
-		logFile.print(dPF);
-		logFile.print(" F. , ");
-		logFile.print(tF);
-		logFile.print("  F. , ");
-		// Reading temperature or humidity takes about 250 milliseconds!
-		// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-		logFile.print("Heat Index:  ");
-		logFile.print(heatIndex(tF,h));
-		logFile.print(" F. ");
-		logFile.print(" , ");
-		//logFile.print((Pressure *  0.000295333727), 3);  //Convert Pascals to inches of Mecury
-		logFile.print(currentPressure,3);
-		logFile.print(" in. Hg. ");
-		logFile.print(" , ");
+			// Open a "log.txt" for appended writing
+			SdFile logFile;
+				logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
+			if (!logFile.isOpen()) error("log");
+					
 		
-		if (pastPressure == currentPressure)
+				
+			//logFile.print(id);
+			//logFile.print(" , ");
+			logFile.print(dtStamp) + " EST";
+			logFile.print(" , ");
+			logFile.print("Humidity:  ");
+			logFile.print(h);
+			logFile.print(" % , ");
+			logFile.print("Dew point:  ");
+			dP=(dewPointFast(t, h));
+			dPF=((dP*9)/5)+32;
+			logFile.print(dPF);
+			logFile.print(" F. , ");
+			logFile.print(tF);
+			logFile.print("  F. , ");
+			// Reading temperature or humidity takes about 250 milliseconds!
+			// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+			logFile.print("Heat Index:  ");
+			logFile.print(heatIndex(tF,h));
+			logFile.print(" F. ");
+			logFile.print(" , ");
+			//logFile.print((Pressure *  0.000295333727), 3);  //Convert Pascals to inches of Mecury
+			logFile.print(currentPressure,3);
+			logFile.print(" in. Hg. ");
+			logFile.print(" , ");
+			
+			if (pastPressure == currentPressure)
+			{
+				logFile.print("...Unchanged     ,");
+			}
+			else
+			{
+				logFile.print((difference),3);
+				logFile.print(" Difference ");
+				logFile.print(", ");
+			}
+
+			logFile.print(milliBars,3);  //Convert Pascals to millibars
+			logFile.print(" millibars ");
+			logFile.print(" , ");
+			logFile.print((Pressure * 0.00000986923267), 3);   //Convert Pascals to Atm (atmospheric pressure)
+			logFile.print(" atm ");
+			logFile.print(" , ");
+			logFile.print(Altitude * 0.0328084);  //Convert cm to Feet
+			logFile.print(" Ft. ");
+			logFile.println();
+			//Increment Record ID number 
+			//id++;
+			getDateTime();
+			Serial.println("Data written to logFile  " + dtStamp); 
+			logFile.close();
+								
+		if(abs(difference) >= .010)
 		{
-			logFile.print("...Unchanged     ,");
+		// Open a "Differ.txt" for appended writing --records Barometric Pressure change difference and time stamps
+			SdFile diffFile;
+				diffFile.open("Differ.txt", O_WRITE | O_CREAT | O_APPEND);
+				if (!diffFile.isOpen()) error("diff");
+				{
+					Serial.print("Difference greater than .010 inches:  ");
+					Serial.print(difference, 3);
+					Serial.print("  ");
+					Serial.print(dtStamp);
+					
+					diffFile.println("");
+					diffFile.print("Difference greater than .010 inches:  ");
+					diffFile.print(difference, 3);
+					diffFile.print("  ");
+					diffFile.print(dtStamp);
+					//want to use an audiable alarm here at some point in developement.
+					diffFile.close();
+				}
 		}
 		else
 		{
-			logFile.print((difference),3);
-			logFile.print(" Difference ");
-			logFile.print(", ");
+			exit;
 		}
-
-		logFile.print(milliBars,3);  //Convert Pascals to millibars
-		logFile.print(" millibars ");
-		logFile.print(" , ");
-		logFile.print((Pressure * 0.00000986923267), 3);   //Convert Pascals to Atm (atmospheric pressure)
-		logFile.print(" atm ");
-		logFile.print(" , ");
-		logFile.print(Altitude * 0.0328084);  //Convert cm to Feet
-		logFile.print(" Ft. ");
-		logFile.println();
-		//Increment Record ID number
-		//id++;
-		getDateTime();
-		Serial.println("Data written to logFile  " + dtStamp);
-		logFile.close();
 	}
-	    
 }
 
 /////////////////
@@ -574,7 +607,7 @@ void listen()   // Listen for client connection
 								dP=(dewPointFast(t, h));
 								dPF=((dP*9)/5)+32;
 
-								getDateTime();
+								//getDateTime();
 
 								// First send the success response code.
 								client.println("HTTP/1.1 200 OK");
@@ -593,8 +626,8 @@ void listen()   // Listen for client connection
 								//client.println("<meta http-equiv=\"refresh\" content=\"15\">");
 								client.println("<h2>Treyburn Lakes</h2><br />");
 								client.println("Indianapolis, IN 46239<br />");
-								client.println("Date,Time:  ");  
-								client.println(dtStamp);
+								client.println("Last Update:  ");  
+								client.println(lastUpdate);
 								client.println(" EST <br />"); 
 								delay(500);
 								client.println("Humidity:  ");
@@ -623,7 +656,7 @@ void listen()   // Listen for client connection
 									{
 										client.println("...Unchanged     ,<br />");
 									}   
-									else
+									else 
 									{
 										client.println(difference, 3);
 										client.print(" Difference in. Hg <br />");
@@ -640,9 +673,9 @@ void listen()   // Listen for client connection
 								client.print(" Feet<br />");
 								client.println("<br /><br />");
 								client.println("<h2>Collected Observations</h2>");
-								client.println("<a href=http://192.168.1.71:8889/log.txt download>Download: Current Collected Observations</a><br />");
+								client.println("<a href=http://192.168.1.71:7388/log.txt download>Download: Current Collected Observations</a><br />");
 								client.println("<br />\r\n");
-								client.println("<a href=http://192.168.1.71:8889/SdBrowse >Download: Previous Collected Observations</a><br />");
+								client.println("<a href=http://192.168.1.71:7388/SdBrowse >View: Previous Collected Observations</a><br />");
 								client.println("<body />\r\n");
 								client.println("<br />\r\n");
 								client.println("</html>\r\n");
@@ -664,7 +697,7 @@ void listen()   // Listen for client connection
 								ListFiles(client, LS_SIZE, root);
 								
 							}		
-							else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/SERVER.TXT") == 0)) // Respond with the path that was accessed.	
+							else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0)) // Respond with the path that was accessed.	
 							{
 																
 								//char *path;
