@@ -1,17 +1,19 @@
-/***************************************************
+/********************************************************************************
 
-  ■   SDWebBrowse_Ethernet_WEBServer.ino    ■
-  ■   Using Arduino Mega 2560 --Rev. 5.0    ■
-  ■   Last modified 06/08/2015 @ 17:12 EST  ■
-  ■   Ethernet Shield version               ■
+  ■  SDWebBrowse_Ethernet_WEBServer.ino     ■
+  ■  Using Arduino Mega 2560 --Rev. 8.0     ■
+  ■  Last modified 07/9/2015 @ 06.17 EST   ■
+  ■  Ethernet Shield version                ■
+  ■  Added Sonalert for difference of .020  ■
+  ■  change in Barometric Pressure
   
-  ■ Modified by "Tech500" with the          ■ 
-  ■ help of "Adafruit Forum"                ■
+  ■  Adapted by "tech500" with the          ■ 
+  ■  help of "Adafruit Forum"               ■
  
 */ 
 // ********************************************************************************
 //
-//   See invidual downloads for each libraries license.
+//   See invidual downloads for each library license.
 //	 
 //	 Following code was developed by merging library examples, adding
 //	 logic for sketch flow.
@@ -151,6 +153,9 @@ void error_P(const char* str) {
 ////////////////
 void setup(void)
 {
+	
+	pinMode(9, OUTPUT);
+	
 	Serial.begin(115200);
 	
 	sd.begin(chipSelect);
@@ -194,7 +199,7 @@ void setup(void)
 
 	// start the Ethernet connection and the server:
 	Ethernet.begin(mac, ip);
-	server.begin();
+	server.begin(); 
 	
 	Serial.print("server is at ");
 	Serial.print(Ethernet.localIP());
@@ -215,11 +220,11 @@ void setup(void)
 /*
 	 //Set Time and Date of the DS1307 Real Time Clock
 	 RTCTimedEvent.time.second = 00;
-	 RTCTimedEvent.time.minute = 31;
+	 RTCTimedEvent.time.minute = 32;
 	 RTCTimedEvent.time.hour = 20;
-	 RTCTimedEvent.time.dayOfWeek  = 2;
-	 RTCTimedEvent.time.day = 4;
-	 RTCTimedEvent.time.month = 5;
+	 RTCTimedEvent.time.dayOfWeek  = 4;
+	 RTCTimedEvent.time.day = 17;
+	 RTCTimedEvent.time.month = 6;
 	 RTCTimedEvent.time.year = 2015;
 	 RTCTimedEvent.writeRTC();
 */
@@ -371,8 +376,8 @@ void loop()
 //////////////
 void logtoSD()   //Output to SD Card every fifthteen minutes
 {
-
-       	h,t,tF,dP,dPF = 0;
+	
+	   	h,t,tF,dP,dPF = 0;
 		float h = dht.readHumidity();
 		delay(500);
 		float t = dht.readTemperature();
@@ -441,29 +446,35 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
 			logFile.println();
 			//Increment Record ID number 
 			//id++;
-			getDateTime();
-			Serial.println("Data written to logFile  " + dtStamp); 
+			getDateTime(); 
+			
+			Serial.println("");
+			Serial.print("Data written to logFile  " + dtStamp); 
 			logFile.close();
 								
-		if(abs(difference) >= .010)
+		if(abs(difference) >= .020)  //After testing and observations of Data; raised from .010 to .020 inches of Mecury
 		{
 		// Open a "Differ.txt" for appended writing --records Barometric Pressure change difference and time stamps
 			SdFile diffFile;
 				diffFile.open("Differ.txt", O_WRITE | O_CREAT | O_APPEND);
 				if (!diffFile.isOpen()) error("diff");
 				{
-					Serial.print("Difference greater than .010 inches:  ");
+					Serial.println("");
+					Serial.print("Difference greater than .020 inches of Mecury ,  ");
 					Serial.print(difference, 3);
-					Serial.print("  ");
+					Serial.print("  ,");
 					Serial.print(dtStamp);
 					
 					diffFile.println("");
-					diffFile.print("Difference greater than .010 inches:  ");
+					diffFile.print("Difference greater than .020 inches of Mecury,  ");
 					diffFile.print(difference, 3);
-					diffFile.print("  ");
+					diffFile.print("  ,");
 					diffFile.print(dtStamp);
 					//want to use an audiable alarm here at some point in developement.
 					diffFile.close();
+					
+					beep(50);  //Duration of Sonalert tone
+					
 				}
 		}
 		else
@@ -506,6 +517,7 @@ void listen()   // Listen for client connection
 	if (client) 
 	{
 		  
+				Serial.println("");
 				Serial.println(F("Client connected."));
 				// Process this request until it completes or times out.
 				// Note that this is explicitly limited to handling one request at a time!
@@ -621,7 +633,9 @@ void listen()   // Listen for client connection
 								client.println("<!DOCTYPE HTML>");
 								client.println("<html>\r\n");
 								client.println("<body>\r\n");
-								client.println("<head><title>Weather Observations</title></head>");
+								client.println("<head><title>Weather Observations</title>");
+								client.println("<link rel='shortcut icon' href='http://192.168.1.71:7388/FAVICON.ICO' type='image/ico'></head>");
+								//client.println("<link rel='icon' href='/favicon.ico' type='image/x-icon'></head>");
 								// add a meta refresh tag, so the browser pulls again every 15 seconds:
 								//client.println("<meta http-equiv=\"refresh\" content=\"15\">");
 								client.println("<h2>Treyburn Lakes</h2><br />");
@@ -691,10 +705,18 @@ void listen()   // Listen for client connection
 								client.println("HTTP/1.1 200 OK");
 								client.println("Content-Type: text/html");
 								client.println();
-
+								client.println("<!DOCTYPE HTML>");
+								client.println("<html>\r\n");
+								client.println("<body>\r\n");
+								client.println("<head><title>SDBrowse</title>");
+								client.println("<link rel='shortcut icon' href='http://192.168.1.71:7388/FAVICON.ICO' type='image/ico'></head>");
+								//client.println("<link rel='icon' href='/favicon.ico' type='image/x-icon'></head>");
 								// print all the files, use a helper to keep it clean
 								client.println("<h2>Files:</h2>");
 								ListFiles(client, LS_SIZE, root);
+								client.println("<body />\r\n");
+								client.println("<br />\r\n");
+								client.println("</html>\r\n");
 								
 							}		
 							else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0)) // Respond with the path that was accessed.	
@@ -973,7 +995,7 @@ void getBMP085()   //Get Barometric pressure readings
     dps.getAltitude(&Altitude);
 
     currentPressure = (Pressure *  0.000295333727);   //convert to inches mercury
-    milliBars = ((Pressure) * .01);
+    milliBars = ((Pressure) * .01);   //Convert to millibars
 }
 
 //////////////////////// 
@@ -989,9 +1011,20 @@ float updateDifference()  //Pressure difference for fifthteen minute interval
 	if (difference == currentPressure){
         difference = 0;
     }		
-	return(difference);
+	return(difference);  //Barometric pressure change in inches of Mecury 
 	
 }
+
+/////////////////////////////////
+void beep(unsigned char delayms){
+  
+  delay(3000);          // wait for a delayms ms
+  digitalWrite(9, HIGH);       // High turns on Sonalert tone
+  delay(3000); 
+  digitalWrite(9, LOW);  //Low turns of Sonalert tone
+   
+  // wait for a delayms ms   
+}  
 
 /////////////
 void newDay()   //Collect Data for twenty-four hours; then start a new day
@@ -1016,6 +1049,7 @@ void newDay()   //Collect Data for twenty-four hours; then start a new day
         logFile.println(", , , , , ,"); //Just a leading blank line, in case there was previous data
         logFile.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
         logFile.close();
+		Serial.println("");
         Serial.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
     }
 }
@@ -1055,7 +1089,8 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
 	logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
 	logFile.println("");
 	logFile.close();
-	Serial.println("Finished");
+	Serial.println("");
+	Serial.println("New LOG.TXT created");
 	
 	// list files
 	cout << pstr("------") << endl;
