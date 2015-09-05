@@ -2,7 +2,7 @@
 
   ■  SDWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 12.0    ■
-  ■  Last modified 08/8/2015 @ 09:20 EST    ■
+  ■  Last modified 09/5/2015 @ 16:19 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■
   ■  change in Barometric Pressure.         ■
@@ -769,9 +769,9 @@ void listen()   // Listen for client connection
           client.println("<br /><br />");
           client.println("<h2>Collected Observations</h2>");
           client.println("</head>");
-          client.println("<a href=http://68.45.231.214:7388/log.txt download>Download: Current Collected Observations</a><br />");
+          client.println("<a href=http://192.168.1.71:7388/log.txt download>Download: Current Collected Observations</a><br />");  //Change to external ip; forward port
           client.println("<br />\r\n");
-          client.println("<a href= http://68.45.231.214:7388/SdBrowse >View: Previous Collected Observations</a><br />");
+          client.println("<a href= http://192.168.1.71:7388/SdBrowse >View: Previous Collected Observations</a><br />");   //Change to external ip; forward port
           client.println("<br />\r\n");
           client.println("<body />\r\n"); 
           client.println("</html>\r\n");
@@ -1083,12 +1083,12 @@ String getDateTime()
 float getDHT22()   //Get Humidity and Temperature readings
 {
 
-    h,t,tF,dP,dPF = 0;
+  h,t,tF,dP,dPF = 0;
   float h = dht.readHumidity();
   float t = dht.readTemperature();
   tF=((t*9)/5)+32;
   dP=(dewPointFast(t, h));
-    dPF=((dP*9)/5)+32;
+  dPF=((dP*9)/5)+32;
 }
 
 //DHT22 Dew point function
@@ -1211,14 +1211,14 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   logFileName += ".txt";
   //Serial.println(logFileName.c_str());
   
-  if(!sd.exists("log.txt"))
+  if(sd.exists("log.txt"))
   { 
-    exit;
+    logFile.rename(sd.vwd(), logFileName.c_str());
+    logFile.close();
   }
   else
   {
-    logFile.rename(sd.vwd(), logFileName.c_str());
-    logFile.close();
+	exit;
   }
 
   // create a new "log.txt" file for appended writing
@@ -1233,4 +1233,3 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   sd.ls(LS_R);
     
 }
-
