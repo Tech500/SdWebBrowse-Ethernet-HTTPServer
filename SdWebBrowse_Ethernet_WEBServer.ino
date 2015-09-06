@@ -28,6 +28,7 @@
 #include <SdFatUtil.h>   //  https://github.com/greiman/SdFat
 #include <Ethernet.h>  // https://github.com/per1234/EthernetMod  Special Ethernet library (client.remoteIP())
 #include <EthernetClient.h>  // http://arduino.cc/en/Main/Software  included in Arduino IDE download
+#include <utility/w5100.h>
 #include <Wire.h>    //  http://arduino.cc/en/Main/Software  included in Arduino IDE download
 #include <BMP085.h>      // http://code.google.com/p/bmp085driver/
 #include <DHT.h>   //https://github.com/adafruit/DHT-sensor-library
@@ -212,7 +213,7 @@ void setup(void)
   Serial.println("");
 
 
-    getDateTime();
+  getDateTime();
   delay(500);
   Serial.println("Connected to LAN:  " + dtStamp);
   Serial.println("");
@@ -515,9 +516,10 @@ void listen()   // Listen for client connection
 {
 
     fileDownload = 0;   //No file being downloaded
-  
-    EthernetClient client = server.available();
-  
+	
+	EthernetClient client = server.available();
+	client.setTimeout(1000);
+	 
     if (client) 
     {
       
