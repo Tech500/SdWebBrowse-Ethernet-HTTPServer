@@ -771,9 +771,10 @@ void listen()   // Listen for client connection
           client.println("<br /><br />");
           client.println("<h2>Collected Observations</h2>");
           client.println("</head>");
-          client.println("<a href=http://192.168.1.71:7388/log.txt download>Download: Current Collected Observations</a><br />");  //Change to external ip; forward port
+          //Must modify "your external ip and port.  Port is assigned port in this sketch.
+          client.println("<a href=http://your external ip and port/log.txt download>Download: Current Collected Observations</a><br />");  //Change to external ip; forward port
           client.println("<br />\r\n");
-          client.println("<a href= http://192.168.1.71:7388/SdBrowse >View: Previous Collected Observations</a><br />");   //Change to external ip; forward port
+          client.println("<a href= http://your external ip and port/SdBrowse >View: Previous Collected Observations</a><br />");   //Change to external ip; forward port
           client.println("<br />\r\n");
           client.println("<body />\r\n"); 
           client.println("</html>\r\n");
