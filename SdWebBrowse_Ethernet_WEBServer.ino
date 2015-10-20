@@ -2,7 +2,7 @@
 
   ■  SDWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 15.0    ■
-  ■  Last modified 10/192015 @ 10:43 EST    ■
+  ■  Last modified 10/19/2015 @ 10:43 EST   ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■
   ■  change in Barometric Pressure.         ■
