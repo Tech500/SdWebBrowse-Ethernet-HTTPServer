@@ -1,8 +1,8 @@
 /******************************************************************************** 
 
   ■  SDWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 15.0    ■
-  ■  Last modified 10/19/2015 @ 10:43 EST   ■
+  ■  Using Arduino Mega 2560 --Rev. 16.0    ■
+  ■  Last modified 10/20/2015 @ 06:51 EST   ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■
   ■  change in Barometric Pressure.         ■
@@ -382,6 +382,9 @@ void loop()
 void logtoSD()   //Output to SD Card every fifthteen minutes
 {
   
+  Serial.begin(115200);
+  
+  
   if((fileDownload) == 1)   //File download has started
   {
     exit;   //Skip logging this time --file download in progress
@@ -403,7 +406,7 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       logFile.print("Humidity:  ");
       logFile.print(h);
       logFile.print(" % , ");
-      logFile.print("Dew point:  ");
+      logFile.print("Dew Point:  ");
       logFile.print((dewPoint) + (9/5 + 32));
       logFile.print(" F. , ");
       logFile.print(f);
@@ -442,7 +445,10 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       //Increment Record ID number 
       //id++;
       Serial.println("");
-      Serial.print("Data written to logFile  " + dtStamp); 
+      Serial.print("Data written to logFile  " + dtStamp);
+	  Serial.println("");
+	  Serial.flush();
+	  
       logFile.close();
                 
     if(abs(difference) >= .020)  //After testing and observations of Data; raised from .010 to .020 inches of Mecury
@@ -463,17 +469,19 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
           diffFile.print(difference, 3);
           diffFile.print("  ,");
           diffFile.print(dtStamp);
-          //want to use an audiable alarm here at some point in developement.
           diffFile.close();
           
           beep(50);  //Duration of Sonalert tone
           
         }
+		exit;
     }
     else
     {
       exit;
     }
+	Serial.flush();
+	Serial.end();
   }
 }
 
@@ -485,7 +493,8 @@ void lcdDisplay()   //   LCD 1602 Display function
     // set up the LCD's number of rows and columns:
     lcd.backlight();
     lcd.noAutoscroll();
-    lcd.setCursor(0, 0);
+    lcd
+	.setCursor(0, 0);
     // Print Barometric Pressure
     lcd.print((Pressure *  0.000295333727),3);   //convert to inches mercury
     lcd.print(" in. Hg.");
@@ -511,6 +520,8 @@ void listen()   // Listen for client connection
     if (client) 
     {
       
+	    Serial.begin(115200);
+	  
         Serial.println("");
         Serial.println(F("Client connected."));
         // Process this request until it completes or times out.
@@ -711,7 +722,7 @@ void listen()   // Listen for client connection
           client.println("Humidity:  ");
           client.print(h, 2);
           client.print(" %<br />");
-          client.println("Dew point:  ");
+          client.println("Dew Point:  ");
           client.print((dewPoint) + (9/5 + 32));
           client.print(" F. <br />");
           client.println("Temperature:  ");
@@ -948,6 +959,8 @@ void listen()   // Listen for client connection
           
     // Close the connection when done.
     Serial.println("Client closed");
+	Serial.flush();
+	Serial.end();
     client.stop();
       
     }
