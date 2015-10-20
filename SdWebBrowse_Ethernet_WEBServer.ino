@@ -1,14 +1,15 @@
 /******************************************************************************** 
 
   ■  SDWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 12.0    ■
-  ■  Last modified 09/5/2015 @ 16:19 EST    ■
+  ■  Using Arduino Mega 2560 --Rev. 15.0    ■
+  ■  Last modified 10/192015 @ 10:43 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■
   ■  change in Barometric Pressure.         ■
   ■  Changed Ethernet library -- remoteIP.  ■
   ■  Added logging of remoteIP.             ■
   ■  Added viewing of remoteIP.             ■
+  ■  Modified dht22 function                ■
   ■                                         ■
   ■  Adapted by "tech500" with the          ■ 
   ■  help of "Adafruit Forum"               ■
@@ -28,7 +29,7 @@
 #include <SdFatUtil.h>   //  https://github.com/greiman/SdFat
 #include <Ethernet.h>  // https://github.com/per1234/EthernetMod  Special Ethernet library (client.remoteIP())
 #include <EthernetClient.h>  // http://arduino.cc/en/Main/Software  included in Arduino IDE download
-#include <utility/w5100.h>
+#include <utility/w5100.h>   // http://arduino.cc/en/Main/Software  included in Arduino IDE download
 #include <Wire.h>    //  http://arduino.cc/en/Main/Software  included in Arduino IDE download
 #include <BMP085.h>      // http://code.google.com/p/bmp085driver/
 #include <DHT.h>   //https://github.com/adafruit/DHT-sensor-library
@@ -74,9 +75,8 @@ DHT dht(DHTPIN, DHTTYPE);
 float h;   // humidity
 float t;   // temperature C.
 float f;   // temperature F.
-float tF;  // temperaturre in degrees F.
-float dP;   // dew point
-float dPF;  //dew point in degrees F.
+double dewPoint;   // dew point
+float hi;  //heat index in degrees F.
 
 #define BUFSIZE 64  //Size of read buffer for file download  -optimized for CC3000.
 
@@ -382,19 +382,11 @@ void loop()
 void logtoSD()   //Output to SD Card every fifthteen minutes
 {
   
-      h,t,tF,dP,dPF = 0;
-    float h = dht.readHumidity();
-    delay(500);
-    float t = dht.readTemperature();
-    tF=((t*9)/5)+32;
-    dP=(dewPointFast(t, h));
-    dPF=((dP*9)/5)+32;
-    
   if((fileDownload) == 1)   //File download has started
   {
     exit;   //Skip logging this time --file download in progress
   }
-  else
+  else 
   {
   
       // Open a "log.txt" for appended writing
@@ -412,16 +404,14 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       logFile.print(h);
       logFile.print(" % , ");
       logFile.print("Dew point:  ");
-      dP=(dewPointFast(t, h));
-      dPF=((dP*9)/5)+32;
-      logFile.print(dPF);
+      logFile.print((dewPoint) + (9/5 + 32));
       logFile.print(" F. , ");
-      logFile.print(tF);
+      logFile.print(f);
       logFile.print("  F. , ");
       // Reading temperature or humidity takes about 250 milliseconds!
       // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
       logFile.print("Heat Index:  ");
-      logFile.print(heatIndex(tF,h));
+      logFile.print(hi);
       logFile.print(" F. ");
       logFile.print(" , ");
       //logFile.print((Pressure *  0.000295333727), 3);  //Convert Pascals to inches of Mecury
@@ -431,7 +421,7 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       
       if (pastPressure == currentPressure)
       {
-        logFile.print("...Unchanged     ,");
+        logFile.print(difference);
       }
       else
       {
@@ -451,8 +441,6 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       logFile.println();
       //Increment Record ID number 
       //id++;
-      getDateTime(); 
-      
       Serial.println("");
       Serial.print("Data written to logFile  " + dtStamp); 
       logFile.close();
@@ -697,13 +685,6 @@ void listen()   // Listen for client connection
         else if ((strcmp(path, "/Weather") == 0))   // Respond with the path that was accessed.                                                         
         { 
           
-          h,t,tF,dP,dPF = 0;
-          float h = dht.readHumidity();
-          float t = dht.readTemperature();
-          tF=((t*9)/5)+32;
-          dP=(dewPointFast(t, h));
-          dPF=((dP*9)/5)+32;
-
           // First send the success response code.
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text");
@@ -731,18 +712,16 @@ void listen()   // Listen for client connection
           client.print(h, 2);
           client.print(" %<br />");
           client.println("Dew point:  ");
-          dP=(dewPointFast(t, h));
-          dPF=(((dP*9)/5)+32);
-          client.print(dPF,1);
+          client.print((dewPoint) + (9/5 + 32));
           client.print(" F. <br />");
           client.println("Temperature:  ");
-          client.print(tF);
+          client.print(f);
           client.print(" F.<br />");
           // Reading temperature or humidity takes about 250 milliseconds!
           // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
           delay(500);
           client.println("Heat Index:  ");
-          client.print(heatIndex(tF,h));
+          client.print(hi);
           client.print(" F. <br />");
           client.println("Barometric Pressure:  ");
           //client.print(F(Pressure *  0.000295333727));  //Convert Pascals to inches of Mecury
@@ -772,9 +751,9 @@ void listen()   // Listen for client connection
           client.println("<h2>Collected Observations</h2>");
           client.println("</head>");
           //Must modify "your external ip and port.  Port is assigned port in this sketch.
-          client.println("<a href=http://your external ip and port/log.txt download>Download: Current Collected Observations</a><br />");  //Change to external ip; forward port
+          client.println("<a href=http://68.45.231.214:7388/log.txt download>Download: Current Collected Observations</a><br />");  //Change to external ip; forward port
           client.println("<br />\r\n");
-          client.println("<a href= http://your external ip and port/SdBrowse >View: Previous Collected Observations</a><br />");   //Change to external ip; forward port
+          client.println("<a href= http://68.45.231.214:7388/SdBrowse >View: Previous Collected Observations</a><br />");   //Change to external ip; forward port
           client.println("<br />\r\n");
           client.println("<body />\r\n"); 
           client.println("</html>\r\n");
@@ -800,6 +779,10 @@ void listen()   // Listen for client connection
           client.println("<body />\r\n");
           client.println("<br />\r\n");
           client.println("</html>\r\n");
+		  
+		  delay(500);
+				
+		  exit;
           
         }   
         else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0)) // Respond with the path that was accessed. 
@@ -1083,48 +1066,34 @@ String getDateTime()
 }
 
 ////////////////
-float getDHT22()   //Get Humidity and Temperature readings
+float getDHT22()
 {
+  // Wait a few seconds between measurements.
+  delay(2000);
 
-  h,t,tF,dP,dPF = 0;
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-  tF=((t*9)/5)+32;
-  dP=(dewPointFast(t, h));
-  dPF=((dP*9)/5)+32;
-}
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  h = dht.readHumidity();
+  // Read temperature as Celsius
+  t = dht.readTemperature();
+  // Read temperature as Fahrenheit
+  f = dht.readTemperature(true);
 
-//DHT22 Dew point function
-// delta max = 0.6544 wrt dewPoint()
-// 6.9 x faster than dewPoint()
-// reference: http://en.wikipedia.org/wiki/Dew_point
-////////////////////////////////////////////////////
-double dewPointFast(double celsius, double humidity)
-{
-  double a = 17.271;
-  double b = 237.7;
-  double temp = (a * celsius) / (b + celsius) + log(humidity*0.01);
-  double Td = (b * temp) / (a - temp);
-  return Td;
-}
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t) || isnan(f)) 
+  {
+    Serial.println("Failed to read from DHT sensor!");
+  }
 
-//DHT22 Heat Index function
-///////////////////////////////////////////////
-double heatIndex(double tempF, double humidity)
-{
-  
-  double c1 = -42.38, c2 = 2.049, c3 = 10.14, c4 = -0.2248, c5= -6.838e-3, c6=-5.482e-2, c7=1.228e-3, c8=8.528e-4, c9=-1.99e-6  ;
-  double T = tempF;
-  double R = humidity;
-
-  double A = (( c5 * T) + c2) * T + c1;
-  double B = ((c7 * T) + c4) * T + c3;
-  double C = ((c9 * T) + c8) * T + c6;
-
-  double rv = (C * R + B) * R + A;
-  return rv;
-}
-
+  // Compute heat index
+  // Must send in temp in Fahrenheit!
+  hi = dht.computeHeatIndex(f, h);
+   
+  double VaporPressureValue = h * 0.01 * 6.112 * exp((17.62 * t) / (t + 243.12));
+  double Numerator =243.12 * log(VaporPressureValue) - 440.1;
+  double Denominator = 19.43 - (log(VaporPressureValue));
+  dewPoint = Numerator / Denominator;
+} 
 ////////////////
 void getBMP085()   //Get Barometric pressure readings
 {
