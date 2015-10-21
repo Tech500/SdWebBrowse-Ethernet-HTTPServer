@@ -1,8 +1,8 @@
 /******************************************************************************** 
 
   ■  SDWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 16.0    ■
-  ■  Last modified 10/20/2015 @ 06:51 EST   ■
+  ■  Using Arduino Mega 2560 --Rev. 15.0    ■
+  ■  Last modified 10/19/2015 @ 10:43 EST   ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■
   ■  change in Barometric Pressure.         ■
@@ -512,6 +512,8 @@ void lcdDisplay()   //   LCD 1602 Display function
 void listen()   // Listen for client connection
 {
 
+	Serial.begin(115200);
+
     fileDownload = 0;   //No file being downloaded
 	
 	EthernetClient client = server.available();
@@ -520,9 +522,7 @@ void listen()   // Listen for client connection
     if (client) 
     {
       
-	    Serial.begin(115200);
-	  
-        Serial.println("");
+	    Serial.println("");
         Serial.println(F("Client connected."));
         // Process this request until it completes or times out.
         // Note that this is explicitly limited to handling one request at a time!
@@ -601,11 +601,12 @@ void listen()   // Listen for client connection
 			exit;
         }     
         // Check the action to see if it was a GET request.
-        if((strncmp(path, "/fav", 4)==0))
+        if(strcmp(path, "/favicon.ico") == 0)
         {
                   
           client.println("HTTP/1.1 200 OK"); //send new page
             client.println("Content-Type: image/ico");
+			client.println("Connnection: close");
             client.println();
           
           // Open "FAVICON.ICO for reading
@@ -615,8 +616,8 @@ void listen()   // Listen for client connection
           
           if (webFile.available()) 
           {
-
-            byte clientBuf[64];
+		  
+			byte clientBuf[64];
             int clientCount = 0;
 
             while(webFile.available())
@@ -627,7 +628,7 @@ void listen()   // Listen for client connection
 
               if(clientCount > 63)
               {
-                // Serial.println("Packet");
+                //Serial.println("Packet sent");
                 client.write(clientBuf,64);
                 clientCount = 0;
               }
@@ -959,11 +960,12 @@ void listen()   // Listen for client connection
           
     // Close the connection when done.
     Serial.println("Client closed");
-	Serial.flush();
-	Serial.end();
+	
     client.stop();
       
     }
+	Serial.flush();
+	Serial.end();
 }      
 
 
@@ -1166,12 +1168,17 @@ void newDay()   //Collect Data for twenty-four hours; then start a new day
   SdFile logFile("log.txt", O_WRITE | O_CREAT | O_APPEND);
   if (!logFile.isOpen()) error("log");
   {
+  
+	Serial.begin(115200);
+  
     delay(1000);
         logFile.println(", , , , , ,"); //Just a leading blank line, in case there was previous data
         logFile.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
         logFile.close();
-    Serial.println("");
+		Serial.println("");
         Serial.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
+		Serial.flush();
+		Serial.end();
     }
 }
 
@@ -1193,7 +1200,7 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   logFileName = "log";
   logFileName += (RTCTimedEvent.time.month);
   logFileName += (RTCTimedEvent.time.day);
-  logFileName += ".txt";
+  logFileName += ".txt"; 
   //Serial.println(logFileName.c_str());
   
   if(sd.exists("log.txt"))
@@ -1210,8 +1217,13 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
   logFile.println("");
   logFile.close();
+  
+  Serial.begin(115200);
+  
   Serial.println("");
   Serial.println("New LOG.TXT created");
+  Serial.flush();
+  Serial.end();
   
   // list files
   cout << pstr("------") << endl;
