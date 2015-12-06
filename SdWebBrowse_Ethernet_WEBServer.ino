@@ -1,8 +1,8 @@
 /******************************************************************************** 
 
   ■  SDWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 15.0    ■
-  ■  Last modified 10/19/2015 @ 10:43 EST   ■
+  ■  Using Arduino Mega 2560 --Rev. 18.0    ■
+  ■  Last modified 11/28/2015 @ 01:18 EST   ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■
   ■  change in Barometric Pressure.         ■
@@ -100,7 +100,7 @@ String remoteAdress;
 // The IP address will be dependent on your local network:
 byte mac[] = { 
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-IPAddress ip(192,168,1,71);
+IPAddress ip(10,0,0,15);
 
 // Initialize the Ethernet server library
 // with the IP address and port you want to use 
@@ -219,17 +219,33 @@ void setup(void)
   Serial.println("");
 
   Serial.println(F("Listening for connections..."));
+    
+  //If used this creates an entry in "Server.txt" for every start; when Serial Monitor is opened.
+  // If "Server.txt" exiats; wifi reconnection, restarts are appended to file.
+  // create server.txt file 
+  SdFile serverFile;
+  serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
+  if (!serverFile.isOpen()) error("Server");
+  {
+    serverFile.println("Starting server:  " + dtStamp);
+    serverFile.close(); 
+    //Serial.println("Ready");
+    Serial.println("");
+  }
+  
+  Serial.flush();
+  Serial.end();
   
 //Uncomment to set Real Time Clock --only needs to be run once
 
 /*
    //Set Time and Date of the DS1307 Real Time Clock
    RTCTimedEvent.time.second = 00;
-   RTCTimedEvent.time.minute = 32;
-   RTCTimedEvent.time.hour = 20;
-   RTCTimedEvent.time.dayOfWeek  = 4;
-   RTCTimedEvent.time.day = 17;
-   RTCTimedEvent.time.month = 6;
+   RTCTimedEvent.time.minute = 38;
+   RTCTimedEvent.time.hour = 6;
+   RTCTimedEvent.time.dayOfWeek  = 1;
+   RTCTimedEvent.time.day = 6;
+   RTCTimedEvent.time.month = 12;
    RTCTimedEvent.time.year = 2015;
    RTCTimedEvent.writeRTC();
 */
@@ -249,8 +265,6 @@ void setup(void)
   // note: use zeroCal only after initialization.
   // dps.zeroCal(101800, 0);    // set zero point
 
-  getDateTime();
-  
   getDHT22();
 
   getBMP085();
@@ -329,22 +343,21 @@ void ListFiles(EthernetClient client, uint8_t flags, SdFile dir) {
 ///////////
 void loop()
 {
-    
-  RTCTimedEvent.loop();
+
+	RTCTimedEvent.loop();
     delay(50);
     RTCTimedEvent.readRTC();
     delay(50);
   
-  //Collect  "log.txt" Data for one day; do it early so day of week still equals 7
-  if ((((RTCTimedEvent.time.hour) == 23 )  &&
-    ((RTCTimedEvent.time.minute) == 59) &&
-    ((RTCTimedEvent.time.second) == 59)))
+	//Collect  "log.txt" Data for one day; do it early so day of week still equals 7
+	if ((((RTCTimedEvent.time.hour) == 23 )  &&
+    ((RTCTimedEvent.time.minute) == 58) &&
+    ((RTCTimedEvent.time.second) == 00)))
     {
-      newDay();
+    newDay();
     }
-
-    //Write Data at 15 minute interval
-
+    
+	//Collect Data at 15 minute interval
     if ((((RTCTimedEvent.time.minute) == 0)||
     ((RTCTimedEvent.time.minute) == 15)||
     ((RTCTimedEvent.time.minute) == 30)||
@@ -352,7 +365,7 @@ void loop()
     && ((RTCTimedEvent.time.second) == 00))
     {
 
-        getDateTime();
+    getDateTime();
     
     lastUpdate = dtStamp;
     
@@ -422,9 +435,10 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       logFile.print(" in. Hg. ");
       logFile.print(" , ");
       
-      if (pastPressure == currentPressure)
+    if (pastPressure == currentPressure)
       {
         logFile.print(difference);
+        logFile.print(" ,");
       }
       else
       {
@@ -432,7 +446,7 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
         logFile.print(" Difference ");
         logFile.print(", ");
       }
-
+      
       logFile.print(milliBars,3);  //Convert Pascals to millibars
       logFile.print(" millibars ");
       logFile.print(" , ");
@@ -446,9 +460,9 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       //id++;
       Serial.println("");
       Serial.print("Data written to logFile  " + dtStamp);
-	  Serial.println("");
-	  Serial.flush();
-	  
+    Serial.println("");
+    Serial.flush();
+    
       logFile.close();
                 
     if(abs(difference) >= .020)  //After testing and observations of Data; raised from .010 to .020 inches of Mecury
@@ -474,14 +488,14 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
           beep(50);  //Duration of Sonalert tone
           
         }
-		exit;
+    exit;
     }
     else
     {
       exit;
     }
-	Serial.flush();
-	Serial.end();
+  Serial.flush();
+  Serial.end();
   }
 }
 
@@ -494,7 +508,7 @@ void lcdDisplay()   //   LCD 1602 Display function
     lcd.backlight();
     lcd.noAutoscroll();
     lcd
-	.setCursor(0, 0);
+  .setCursor(0, 0);
     // Print Barometric Pressure
     lcd.print((Pressure *  0.000295333727),3);   //convert to inches mercury
     lcd.print(" in. Hg.");
@@ -512,17 +526,17 @@ void lcdDisplay()   //   LCD 1602 Display function
 void listen()   // Listen for client connection
 {
 
-	Serial.begin(115200);
+  Serial.begin(115200);
 
     fileDownload = 0;   //No file being downloaded
-	
-	EthernetClient client = server.available();
-	client.setTimeout(1000);
-	 
+  
+  EthernetClient client = server.available();
+  client.setTimeout(1000);
+   
     if (client) 
     {
       
-	    Serial.println("");
+      Serial.println("");
         Serial.println(F("Client connected."));
         // Process this request until it completes or times out.
         // Note that this is explicitly limited to handling one request at a time!
@@ -573,32 +587,32 @@ void listen()   // Listen for client connection
           SdFile logFile;
             logFile.open("access.txt", O_WRITE | O_CREAT | O_APPEND);
             
-			if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")==0))  //Log all server access except "favicon.ico"
+      if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")==0))  //Log all server access except "favicon.ico"
             {
-				
-				if (!logFile.isOpen()) error("log");
-				
-				IPAddress ip(192,168,1,71);  //Server ip address
-				IPAddress ip2(192,168,1,47);  //Host ip address
-				
-				
-				if ((client.remoteIP()) == ip2)  //Compare client ip address with Host ip address
-				{
-					exit;
-			    }
-				else
-				{
-				  logFile.print("Accessed:  ");
-				  logFile.print(dtStamp + " -- ");
-				  logFile.print(client.remoteIP());
-				  logFile.print(" -- ");
-				  logFile.print("Path:  ");
+        
+        if (!logFile.isOpen()) error("log");
+        
+        IPAddress ip(10,0,0,15);  //Server ip address
+        IPAddress ip2(10,0,0,146);  //Host ip address
+        
+        //Do not list Host computer ip
+        if ((client.remoteIP()) == ip2)  //Compare client ip address with Host ip address
+        {
+          exit;
+          }
+        else
+        {
+          logFile.print("Accessed:  ");
+          logFile.print(dtStamp + " -- ");
+          logFile.print(client.remoteIP());
+          logFile.print(" -- ");
+          logFile.print("Path:  ");
                   logFile.println(path);
-				
-				  logFile.close();
-				}
-			}
-			exit;
+        
+          logFile.close();
+        }
+      }
+      exit;
         }     
         // Check the action to see if it was a GET request.
         if(strcmp(path, "/favicon.ico") == 0)
@@ -606,7 +620,7 @@ void listen()   // Listen for client connection
                   
           client.println("HTTP/1.1 200 OK"); //send new page
             client.println("Content-Type: image/ico");
-			client.println("Connnection: close");
+      client.println("Connnection: close");
             client.println();
           
           // Open "FAVICON.ICO for reading
@@ -616,8 +630,8 @@ void listen()   // Listen for client connection
           
           if (webFile.available()) 
           {
-		  
-			byte clientBuf[64];
+      
+      byte clientBuf[64];
             int clientCount = 0;
 
             while(webFile.available())
@@ -721,7 +735,7 @@ void listen()   // Listen for client connection
           client.println(" EST <br />"); 
           delay(500);
           client.println("Humidity:  ");
-          client.print(h, 2);
+          client.print(h, 2); 
           client.print(" %<br />");
           client.println("Dew Point:  ");
           client.print((dewPoint) + (9/5 + 32));
@@ -739,20 +753,23 @@ void listen()   // Listen for client connection
           //client.print(F(Pressure *  0.000295333727));  //Convert Pascals to inches of Mecury
           client.print(currentPressure);  
           client.print(" in. Hg.<br />");
-                
-            if (pastPressure == currentPressure)
-            {
-            client.println("...Unchanged     ,<br />");
-            }   
-            else 
-            {
-            client.println(difference, 3);
-            client.print(" Difference in. Hg <br />"); 
-            }
+          
+      if (pastPressure == currentPressure)
+      {
+        client.print((difference),3);
+        client.print(" in. Hg.   Difference. ");
+        client.print("<br />");
+      }
+      else
+      {
+        client.print((difference),3);
+        client.print(" in. Hg.   Difference. ");
+        client.print("<br />");
+      }
             
           client.println("Barometric Pressure:  ");
           client.println(milliBars);
-          client.println(" mb.<br />");
+          client.println(" millBars <br />");
           client.println("Atmosphere:  ");
           client.print(Pressure * 0.00000986923267, 3);   //Convert Pascals to Atm (atmospheric pressure)
           client.print(" atm <br />");
@@ -791,10 +808,10 @@ void listen()   // Listen for client connection
           client.println("<body />\r\n");
           client.println("<br />\r\n");
           client.println("</html>\r\n");
-		  
-		  delay(500);
-				
-		  exit;
+      
+      delay(500);
+        
+      exit;
           
         }   
         else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0)) // Respond with the path that was accessed. 
@@ -814,11 +831,11 @@ void listen()   // Listen for client connection
           filename = &MyBuffer[1];
           Serial.println(filename);
           }
-		  if (filename == "FAVICON.ICO")
-		  {
-			exit;
-		  }
-		  
+      if (filename == "FAVICON.ICO")
+      {
+      exit;
+      }
+      
           
           Serial.flush();
           
@@ -883,10 +900,10 @@ void listen()   // Listen for client connection
             file.close();
             }
         } 
-		// Check the action to see if it was a GET request.
+    // Check the action to see if it was a GET request.
         else if ((strcmp(path, "/lucid") == 0))   // Respond with the path that was accessed.                                                         
         { 
-			// Open file for reading
+      // Open file for reading
           SdFile webFile;
             webFile.open("ACCESS.TXT", O_READ);
             
@@ -933,7 +950,7 @@ void listen()   // Listen for client connection
 
             
           exit;
-		}
+    }
         else 
         {
           // everything else is a 404
@@ -960,12 +977,12 @@ void listen()   // Listen for client connection
           
     // Close the connection when done.
     Serial.println("Client closed");
-	
+  
     client.stop();
       
     }
-	Serial.flush();
-	Serial.end();
+  Serial.flush();
+  Serial.end();
 }      
 
 
@@ -1100,7 +1117,7 @@ float getDHT22()
     Serial.println("Failed to read from DHT sensor!");
   }
 
-  // Compute heat index
+  // Compute heat index 
   // Must send in temp in Fahrenheit!
   hi = dht.computeHeatIndex(f, h);
    
@@ -1113,7 +1130,7 @@ float getDHT22()
 void getBMP085()   //Get Barometric pressure readings
 {
 
-    dps.getTemperature(&Temperature);
+    dps.getTemperature(&Temperature); 
     dps.getPressure(&Pressure);
     dps.getAltitude(&Altitude);
 
@@ -1152,15 +1169,13 @@ void beep(unsigned char delayms){
 /////////////
 void newDay()   //Collect Data for twenty-four hours; then start a new day
 {
-  if (((RTCTimedEvent.time.dayOfWeek) == 7) && 
-    ((RTCTimedEvent.time.hour) == 23) &&
-    ((RTCTimedEvent.time.minute) == 59) &&
-    ((RTCTimedEvent.time.second) == 59))
+
+    //Do file maintence on 7th day of week at appointed time from RTC.  Assign new name to "log.txt."  Create new "log.txt."
+	if ((RTCTimedEvent.time.dayOfWeek) == 7)
     {
-      delay(1000);
-      fileStore();
+    fileStore();
     }
-      
+	
   //id = 1;   //Reset id for start of new day
     //Write logFile Header
   
@@ -1169,23 +1184,26 @@ void newDay()   //Collect Data for twenty-four hours; then start a new day
   if (!logFile.isOpen()) error("log");
   {
   
-	Serial.begin(115200);
+  Serial.begin(115200);
   
     delay(1000);
         logFile.println(", , , , , ,"); //Just a leading blank line, in case there was previous data
         logFile.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
         logFile.close();
-		Serial.println("");
+    Serial.println("");
         Serial.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
-		Serial.flush();
-		Serial.end();
+    Serial.flush();
+    Serial.end();
     }
+  
+  
 }
 
 ////////////////
 void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + day + ".txt") and create new, empty "log.txt"
 {
 
+  
   // create a file and write one line to the file
   SdFile logFile("log.txt", O_WRITE | O_CREAT );
   if (!logFile.isOpen()) 
@@ -1194,7 +1212,7 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   }
    
   // rename the file log.txt
-  // sd.vwd() is the volume working directory, root.
+  // sd.vwd() is the volume working directory, root. 
   
   logFileName = ""; 
   logFileName = "log";
@@ -1222,11 +1240,12 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   
   Serial.println("");
   Serial.println("New LOG.TXT created");
-  Serial.flush();
-  Serial.end();
   
   // list files
   cout << pstr("------") << endl;
   sd.ls(LS_R);
+  
+  Serial.flush();
+  Serial.end();
     
 }
