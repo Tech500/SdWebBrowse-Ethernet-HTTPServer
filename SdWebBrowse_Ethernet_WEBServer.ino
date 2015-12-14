@@ -581,15 +581,17 @@ void listen()   // Listen for client connection
 				}
 
 				parsed = parseRequest(buffer, bufindex, action, path);
+				
 			}
+			
 
     
 		// Handle the request if it was parsed. 
 		if (parsed) 
 		{
+			
 			Serial.print("Client IP address:  ");
 			Serial.println(client.remoteIP());
-			delay(500);             
 			Serial.println(F("Processing request"));
 			Serial.print(F("Action: ")); Serial.println(action);
 			Serial.print(F("Path: ")); Serial.println(path); 
@@ -600,9 +602,7 @@ void listen()   // Listen for client connection
 			}
 			else
 			{
-			  
-			
-			
+					
 				if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")== 0))  //Log all server access except "favicon.ico"
 				{ 
 
@@ -838,7 +838,7 @@ void listen()   // Listen for client connection
 					fileDownload = 1;   //File download has started
 
 					//client.println("Content-Type: text/plain");
-					client.println("Content-Type: application/octet-stream");
+					client.println("Content-Type: text/plain");
 					client.println("Content-Disposition: attachment");
 					client.println("Content-Length:");
 					client.println();
@@ -872,7 +872,7 @@ void listen()   // Listen for client connection
 
 			} 
 			// Check the action to see if it was a GET request.
-			else if ((strcmp(path, "/lucid") == 0))   // Respond with the path that was accessed.                                                         
+			else if ((strcmp(path, "/lucid500.txt") == 0))   // Respond with the path that was accessed.                                                         
 			{ 
 			   // Open ACCESS.TXT for reading
 			   SdFile webFile;
@@ -883,7 +883,7 @@ void listen()   // Listen for client connection
 				fileDownload = 1;   //File download has started
 			  
 				client.println("HTTP/1.1 200 OK");
-				client.println("Content-Type: application/octet-stream");
+				client.println("Content-Type: text/plain");                  
 				client.println("Content-Disposition: attachment");
 				client.println("Content-Length:");
 				client.println("Connnection: close");
