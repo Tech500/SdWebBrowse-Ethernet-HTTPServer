@@ -2,7 +2,7 @@
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 22.0    ■
-  ■  Last modified 12/31/2015 @ 19:24 EST   ■
+  ■  Last modified 12/31/2015 @ 19:55 EST   ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■
   ■  change in Barometric Pressure.         ■
@@ -247,20 +247,21 @@ void setup(void)
     {
     serverFile.println("Starting server:  " + dtStamp);
     serverFile.close(); 
-    }
+    } 
 
     //Uncomment to set Real Time Clock --only needs to be run once
 
-  
+/* 
     //Set Time and Date of the DS1307 Real Time Clock
     RTCTimedEvent.time.second = 00;
-    RTCTimedEvent.time.minute = 11;
-    RTCTimedEvent.time.hour = 12;
+    RTCTimedEvent.time.minute =53;
+    RTCTimedEvent.time.hour = 19;
     RTCTimedEvent.time.dayOfWeek  = 5;
     RTCTimedEvent.time.day = 31;
     RTCTimedEvent.time.month = 12;
     RTCTimedEvent.time.year = 2015;
     RTCTimedEvent.writeRTC();
+*/
   
     // uncomment for different initialization settings
     //dps.init();     // QFE (Field Elevation above ground level) is set to 0 meters.
@@ -371,7 +372,7 @@ void loop()
   
   value = digitalRead(RESET_WATCHDOG1);
   
-  if(value == LOW)
+  if(!value == LOW)
   {
 	ResetWatchdog1();
 	//creates an entry in "watchDogFile.txt" for every Arduino Mega reset
