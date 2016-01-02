@@ -1,14 +1,14 @@
 /******************************************************************************** 
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 22.0    ■
-  ■  Last modified 12/31/2015 @ 19:55 EST   ■
+  ■  Using Arduino Mega 2560 --Rev. 23.0    ■                   Version 23
+  ■  Last modified 1/2/2016 @ 17:55 EST     ■
   ■  Ethernet Shield version                ■
-  ■  Added Sonalert for difference of .020  ■
-  ■  change in Barometric Pressure.         ■
+  ■  Added Sonalert for difference of .020  ■  
+  ■  change in Barometric Pressure.         ■  
   ■  Added SwitchDoc Labs Watchdog Dual     ■
-  ■   Timer 12/30/2015                      ■
-  ■  Changed Ethernet library -- remoteIP.  ■
+  ■  Timer 12/30/2015                       ■     Used ebl-arduino\RTCEventTimer library feature to initize a minute timer
+  ■  Changed Ethernet library -- remoteIP.  ■     for calling ResetWatchdog1().  "Patting the Dog" occurs every one minute.
   ■  Added logging of remoteIP.             ■
   ■  Added viewing of remoteIP.             ■
   ■  Modified dht22 function                ■
@@ -173,8 +173,8 @@ void error_P(const char* str)
 ////////////////
 void setup(void)
 {
-  
-    pinMode(RESET_WATCHDOG1,OUTPUT);
+   
+    pinMode(RESET_WATCHDOG1, OUTPUT);  //Used for SwitchDoc Labs "WatchDog Dual Timer"
   
     pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
     
@@ -234,7 +234,7 @@ void setup(void)
     delay(500);
     Serial.println("Connected to LAN:  " + dtStamp);
     Serial.println("");
-	Serial.flush();
+  Serial.flush();
     Serial.end();
 
     Serial.println(F("Listening for connections..."));
@@ -249,10 +249,11 @@ void setup(void)
     serverFile.close(); 
     } 
 
-    //Uncomment to set Real Time Clock --only needs to be run once
+   
 
-/* 
-    //Set Time and Date of the DS1307 Real Time Clock
+/*  //Uncomment to set Real Time Clock --only needs to be run once; then comment out.
+	//Used to Set Time and Date of the DS1307 Real Time Clock
+    
     RTCTimedEvent.time.second = 00;
     RTCTimedEvent.time.minute =53;
     RTCTimedEvent.time.hour = 19;
@@ -261,7 +262,18 @@ void setup(void)
     RTCTimedEvent.time.month = 12;
     RTCTimedEvent.time.year = 2015;
     RTCTimedEvent.writeRTC();
-*/
+*/	
+	//initial buffer timer
+	RTCTimedEvent.initialCapacity = sizeof(RTCTimerInformation)*3;
+	
+	//event for every minute
+	RTCTimedEvent.addTimer(TIMER_ANY, //minute
+                         TIMER_ANY, //hour
+                         TIMER_ANY, //day fo week
+                         TIMER_ANY, //day
+                         TIMER_ANY, //month
+                         minuteCall);
+
   
     // uncomment for different initialization settings
     //dps.init();     // QFE (Field Elevation above ground level) is set to 0 meters.
@@ -271,7 +283,7 @@ void setup(void)
     // this initialization is useful for normalizing pressure to specific datum.
     // OR setting current local hPa information from a weather station/local airport (QNH).
 
-    dps.init(MODE_ULTRA_HIGHRES, 25115.5, true);  // 824 Ft. GPS indicated Elevation, true = using meter units
+    dps.init(MODE_ULTRA_HIGHRES, 25115.5, true);  // 824 Ft. GPS indicated Elevation; true = using meter units
     // this initialization is useful if current altitude is known,
     // pressure will be calculated based on TruePressure and known altitude.
 
@@ -369,26 +381,7 @@ void ListFiles(EthernetClient client, uint8_t flags, SdFile dir)
 ///////////
 void loop()
 {
-  
-  value = digitalRead(RESET_WATCHDOG1);
-  
-  if(!value == LOW)
-  {
-	ResetWatchdog1();
-	//creates an entry in "watchDogFile.txt" for every Arduino Mega reset
-    // "watchDogFile" has reseet Arduino Mega 
-    SdFile watchDogFile;
-    watchDogFile.open("Watchdog.txt", O_RDWR | O_CREAT | O_APPEND);
-    if (!watchDogFile.isOpen()) error("Server");
-    watchDogFile.println("WatchDog Reset:  " + dtStamp);
-	Serial.println("Watchdog1 Reset   " + dtStamp);
-	Serial.end();
-	
-    watchDogFile.close(); 
-  
-  }
-  else
-  
+  	
   RTCTimedEvent.loop();
   delay(50);
   RTCTimedEvent.readRTC();
@@ -399,7 +392,7 @@ void loop()
   ((RTCTimedEvent.time.minute) == 58) &&
   ((RTCTimedEvent.time.second) == 00)))
   {
-  newDay();
+	newDay();
   }
 
   //Collect Data at 15 minute interval
@@ -427,7 +420,7 @@ void loop()
   //lcdDisplay();      //   LCD 1602 Display function --used for 15 minute update
 
   pastPressure = (Pressure *  0.000295333727);   //convert to inches mercury
-
+  
   }
   else
   {
@@ -576,13 +569,11 @@ void listen()   // Listen for client connection
 
   EthernetClient client = server.available();
   client.setTimeout(250);
-  
-  
-   
+     
     if (client) 
     {
       
-        Serial.println("");
+	    Serial.println("");
         Serial.println(F("Client connected."));
         // Process this request until it completes or times out.
         // Note that this is explicitly limited to handling one request at a time!
@@ -605,7 +596,7 @@ void listen()   // Listen for client connection
       {
         if (client.available()) 
         {
-            buffer[bufindex++] = client.read();
+            buffer[bufindex++] = client.read(); 
         }
 
         parsed = parseRequest(buffer, bufindex, action, path);
@@ -618,11 +609,11 @@ void listen()   // Listen for client connection
     if (parsed) 
     {
     
-        Serial.print("Client IP address:  ");
-      Serial.println(client.remoteIP());
-      Serial.println(F("Processing request"));
-      Serial.print(F("Action: ")); Serial.println(action);
-      Serial.print(F("Path: ")); Serial.println(path); 
+    Serial.print("Client IP address:  ");
+	Serial.println(client.remoteIP());
+	Serial.println(F("Processing request"));
+	Serial.print(F("Action: ")); Serial.println(action);
+	Serial.print(F("Path: ")); Serial.println(path); 
     
       
       if((fileDownload) == 1)   //File download has started
@@ -1029,11 +1020,27 @@ void parseFirstLine(char* line, char* action, char* path)
   strncpy(path, linepath, MAX_PATH);
 }
 
+////////////////////////////////////////////
+void minuteCall(RTCTimerInformation* Sender) 
+{
+	getDateTime();
+	
+	// Debugging purpose
+	//Serial.begin(115200);
+	//Serial.println("");
+	//Serial.println("Patted the Dog: " + dtStamp);   
+	//Serial.println("");
+		
+	ResetWatchdog1();  //SwitchDoc Labs "Watchdog Dual Timer;" pat the dog
+	//Serial.println("ResetWatchdog1 called; sends pulse to pin 6 ");
+	//Serial.end();
+}
 
+//////////////////////////////////////////////////////////////////////////////////
 //  DS1307 Date and Time Stamping  Orginal function by
 //  Bernhard    http://www.backyardaquaponics.com/forum/viewtopic.php?f=50&t=15687
 //  Modified by Tech500 to use RTCTimedEvent library
-////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 String getDateTime()
 {
 
@@ -1159,13 +1166,12 @@ float updateDifference()  //Pressure difference for fifthteen minute interval
 /////////////////////
 void ResetWatchdog1()
 {
-
-     Serial.begin(115200);
+   
      pinMode(RESET_WATCHDOG1, OUTPUT);
      delay(200);
      pinMode(RESET_WATCHDOG1, INPUT);
-	 getDateTime();
-	 
+   
+  
 }
 ////////////////////////////////
 void beep(unsigned char delayms)
