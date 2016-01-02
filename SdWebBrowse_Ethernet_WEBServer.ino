@@ -97,7 +97,7 @@ float milliBars;
 
 float difference;
 
-#define RESET_WATCHDOG1 6   //SwitchDoc Labs external Watchdog Dual Timer
+#define RESET_WATCHDOG1 6   //SwitchDoc Labs external Watchdog Dual Timer:   http://www.switchdoc.com/dual-watchdog-timer/
 
 long int id = 1;  //Increments record number
 
