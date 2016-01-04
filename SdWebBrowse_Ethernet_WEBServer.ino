@@ -7,7 +7,7 @@
   ■  Added Sonalert for difference of .020  ■  
   ■  change in Barometric Pressure.         ■  
   ■  Added SwitchDoc Labs Watchdog Dual     ■
-  ■  Timer 12/30/2015                       ■     Used ebl-arduino\RTCEventTimer library feature to initize a minute timer
+  ■  Timer 12/30/2015                       ■     Used RTCEventTimer library feature to initalize a minute timer
   ■  Changed Ethernet library -- remoteIP.  ■     for calling ResetWatchdog1().  "Patting the Dog" occurs every one minute.
   ■  Added logging of remoteIP.             ■
   ■  Added viewing of remoteIP.             ■
@@ -97,7 +97,7 @@ float milliBars;
 
 float difference;
 
-#define RESET_WATCHDOG1 6   //SwitchDoc Labs external Watchdog Dual Timer:   http://www.switchdoc.com/dual-watchdog-timer/
+#define RESET_WATCHDOG1 6   //SwitchDoc Labs external Watchdog Dual Timer
 
 long int id = 1;  //Increments record number
 
@@ -173,9 +173,8 @@ void error_P(const char* str)
 ////////////////
 void setup(void)
 {
+	pinMode(A3, OUTPUT);
    
-    pinMode(RESET_WATCHDOG1, OUTPUT);  //Used for SwitchDoc Labs "WatchDog Dual Timer"
-  
     pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
     
     Serial.begin(115200);
@@ -234,7 +233,7 @@ void setup(void)
     delay(500);
     Serial.println("Connected to LAN:  " + dtStamp);
     Serial.println("");
-  Serial.flush();
+    Serial.flush();
     Serial.end();
 
     Serial.println(F("Listening for connections..."));
@@ -381,6 +380,8 @@ void ListFiles(EthernetClient client, uint8_t flags, SdFile dir)
 ///////////
 void loop()
 {
+
+ 
   	
   RTCTimedEvent.loop();
   delay(50);
@@ -1023,17 +1024,10 @@ void parseFirstLine(char* line, char* action, char* path)
 ////////////////////////////////////////////
 void minuteCall(RTCTimerInformation* Sender) 
 {
-	getDateTime();
 	
-	// Debugging purpose
-	//Serial.begin(115200);
-	//Serial.println("");
-	//Serial.println("Patted the Dog: " + dtStamp);   
-	//Serial.println("");
 		
 	ResetWatchdog1();  //SwitchDoc Labs "Watchdog Dual Timer;" pat the dog
-	//Serial.println("ResetWatchdog1 called; sends pulse to pin 6 ");
-	//Serial.end();
+	
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1166,11 +1160,20 @@ float updateDifference()  //Pressure difference for fifthteen minute interval
 /////////////////////
 void ResetWatchdog1()
 {
-   
-     pinMode(RESET_WATCHDOG1, OUTPUT);
-     delay(200);
-     pinMode(RESET_WATCHDOG1, INPUT);
-   
+    
+	getDateTime();
+	
+	// Debugging purpose
+	Serial.begin(115200);
+	Serial.println("");
+	Serial.println("Patted the Dog: " + dtStamp);   
+		
+	pinMode(RESET_WATCHDOG1, OUTPUT);
+	delay(200);
+	pinMode(RESET_WATCHDOG1, INPUT);
+	   
+    Serial.println("ResetWatchdog1 called; sends pulse to pin 6 ");
+	Serial.end();
   
 }
 ////////////////////////////////
