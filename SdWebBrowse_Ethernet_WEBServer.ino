@@ -1271,3 +1271,4 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   Serial.end();
 
 }
+
