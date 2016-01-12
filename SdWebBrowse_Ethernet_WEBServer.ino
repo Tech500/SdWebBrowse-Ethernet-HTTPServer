@@ -1,7 +1,7 @@
 /******************************************************************************** 
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 24.0    ■                   Version 23
+  ■  Using Arduino Mega 2560 --Rev. 24.0    ■                   Version 24
   ■  Last modified 1/12/2016 @ 14:49 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■  
