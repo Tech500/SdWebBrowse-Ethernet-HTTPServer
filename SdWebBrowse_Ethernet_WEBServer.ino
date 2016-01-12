@@ -1,8 +1,8 @@
 /******************************************************************************** 
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 23.0    ■                   Version 23
-  ■  Last modified 1/2/2016 @ 17:55 EST     ■
+  ■  Using Arduino Mega 2560 --Rev. 24.0    ■                   Version 23
+  ■  Last modified 1/12/2016 @ 14:49 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■  
   ■  change in Barometric Pressure.         ■  
@@ -79,12 +79,10 @@ DHT dht(DHTPIN, DHTTYPE);
 #define sonalertPin 9  // pin for Piezo buzzer
 
 float h;   // humidity
-float t;   // temperature C.
+float t;   // temperature C. 
 float f;   // temperature F.
 double dewPoint;   // dew point
 float hi;  //heat index in degrees F.
-
-int value;  //Hold value of digitalRead
 
 #define BUFSIZE 64  //Size of read buffer for file download  -optimized for CC3000.
 
@@ -97,7 +95,7 @@ float milliBars;
 
 float difference;
 
-#define RESET_WATCHDOG1 6   //SwitchDoc Labs external Watchdog Dual Timer
+#define RESET_WATCHDOG1 6  //SwitchDoc Labs external Watchdog Dual Timer
 
 long int id = 1;  //Increments record number
 
@@ -173,8 +171,7 @@ void error_P(const char* str)
 ////////////////
 void setup(void)
 {
-	pinMode(A3, OUTPUT);
-   
+	
     pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
     
     Serial.begin(115200);
@@ -216,7 +213,7 @@ void setup(void)
     root.ls(LS_R);
 
     Serial.println();
-    PgmPrintln("Done");
+    //PgmPrintln("Done");
 
     // start the Ethernet connection and the server:
     Ethernet.begin(mac, ip1);
@@ -230,13 +227,11 @@ void setup(void)
 
 
     getDateTime();
-    delay(500);
     Serial.println("Connected to LAN:  " + dtStamp);
-    Serial.println("");
-    Serial.flush();
+    Serial.println(F("Listening for connections..."));
+	Serial.flush();
     Serial.end();
 
-    Serial.println(F("Listening for connections..."));
 
     //If used this creates an entry in "Server.txt" for every start; when Serial Monitor is opened.
     // If "Server.txt" exists; wifi reconnection, restarts are appended to file; 
@@ -244,11 +239,11 @@ void setup(void)
     serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
     if (!serverFile.isOpen()) error("Server");
     {
-    serverFile.println("Starting server:  " + dtStamp);
-    serverFile.close(); 
+		serverFile.println("Starting server:  " + dtStamp);
+		serverFile.close(); 
     } 
 
-   
+
 
 /*  //Uncomment to set Real Time Clock --only needs to be run once; then comment out.
 	//Used to Set Time and Date of the DS1307 Real Time Clock
@@ -293,7 +288,7 @@ void setup(void)
 
     getBMP085();
 
-    lcdDisplay();      //   LCD 1602 Display function --used for inital display
+    //lcdDisplay();      //   LCD 1602 Display function --used for inital display
   
 }
 
@@ -1025,8 +1020,11 @@ void parseFirstLine(char* line, char* action, char* path)
 void minuteCall(RTCTimerInformation* Sender) 
 {
 	
-		
-	ResetWatchdog1();  //SwitchDoc Labs "Watchdog Dual Timer;" pat the dog
+	//Sends pulse to keep external "SwitchDoc Labs," "Dual Watchdog Timer" alive	
+	pinMode(RESET_WATCHDOG1, OUTPUT);
+	delay(200);
+	pinMode(RESET_WATCHDOG1, INPUT);
+	
 	
 }
 
@@ -1151,39 +1149,20 @@ float updateDifference()  //Pressure difference for fifthteen minute interval
   difference = currentPressure - pastPressure;  //This will be pressure from this pass thru loop, pressure1 will be new pressure reading next loop pass
   if (difference == currentPressure)
   {
-    difference = 0;
+    difference = 0; 
   }   
   return(difference);  //Barometric pressure change in inches of Mecury 
   
 }
 
-/////////////////////
-void ResetWatchdog1()
-{
-    
-	getDateTime();
-	
-	// Debugging purpose
-	Serial.begin(115200);
-	Serial.println("");
-	Serial.println("Patted the Dog: " + dtStamp);   
-		
-	pinMode(RESET_WATCHDOG1, OUTPUT);
-	delay(200);
-	pinMode(RESET_WATCHDOG1, INPUT);
-	   
-    Serial.println("ResetWatchdog1 called; sends pulse to pin 6 ");
-	Serial.end();
-  
-}
 ////////////////////////////////
 void beep(unsigned char delayms)
 {
   
   delay(3000);          // wait for a delayms ms
-  digitalWrite(9, HIGH);       // High turns on Sonalert tone
+  digitalWrite(sonalertPin, HIGH);       // High turns on Sonalert tone
   delay(3000); 
-  digitalWrite(9, LOW);  //Low turns of Sonalert tone
+  digitalWrite(sonalertPin, LOW);  //Low turns of Sonalert tone
 
   // wait for a delayms ms   
 }  
@@ -1271,4 +1250,3 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   Serial.end();
 
 }
-
