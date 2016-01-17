@@ -2,7 +2,7 @@
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 24.0    ■                   Version 24
-  ■  Last modified 1/12/2016 @ 14:49 EST    ■
+  ■  Last modified 1/16/2016 @ 07:15 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■  
   ■  change in Barometric Pressure.         ■  
@@ -632,9 +632,9 @@ void listen()   // Listen for client connection
           IPAddress ip2(10,0,0,146);  //Host ip address
 
           //Do not list Host computer ip
-          if ((client.remoteIP()) == ip2)  //Compare client ip address with Host ip address
+          if ((client.remoteIP()) = ip2)  //Compare client ip address with Host ip address 
           {
-            exit;  //if Host computer no not log
+            exit;  //if Host computer; do not log 
           }
           else
           {
@@ -1028,11 +1028,11 @@ void minuteCall(RTCTimerInformation* Sender)
 	
 }
 
-//////////////////////////////////////////////////////////////////////////////////
 //  DS1307 Date and Time Stamping  Orginal function by
 //  Bernhard    http://www.backyardaquaponics.com/forum/viewtopic.php?f=50&t=15687
 //  Modified by Tech500 to use RTCTimedEvent library
-//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 String getDateTime()
 {
 
