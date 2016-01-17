@@ -19,7 +19,7 @@
 */ 
 // ********************************************************************************
 //
-//   See invidual downloads for each library license.
+//   See invidual downloads for each library license. 
 //   
 //   Following code was developed by merging library examples, adding
 //   logic for sketch flow.
