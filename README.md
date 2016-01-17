@@ -11,7 +11,7 @@ Components that were used in this project; Arduino Mega 2560 Rev 3, Ethernet Shi
 
 Sketch involves working with components and Arduino programing; Arduino Mega, Ethernet Shield with SD Card, Web server, Data logger, File management, LCD Display, Real Time Clock, Humidity and Temperature sensor, and Barometric sensor, making this project a useful tool in learning to program and work with the Arduino!
 
-https://youtu.be/eKO8z6Mm2dE
+http://tinyurl.com/sketch-project
 
 ~Four minute video of project web interface.
 
