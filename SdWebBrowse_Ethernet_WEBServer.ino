@@ -1,25 +1,25 @@
-/******************************************************************************** 
+/********************************************************************************  
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 24.0    ■                   Version 24
-  ■  Last modified 1/16/2016 @ 07:15 EST    ■
+  ■  Using Arduino Mega 2560 --Rev. 30.1    ■                   Version 30.1 Correction
+  ■  Last modified 2/14/2016 @ 00:27 EST    ■
   ■  Ethernet Shield version                ■
-  ■  Added Sonalert for difference of .020  ■  
-  ■  change in Barometric Pressure.         ■  
+  ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of ""SwitchDoc Labs,
+  ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
   ■  Added SwitchDoc Labs Watchdog Dual     ■
   ■  Timer 12/30/2015                       ■     Used RTCEventTimer library feature to initalize a minute timer
-  ■  Changed Ethernet library -- remoteIP.  ■     for calling ResetWatchdog1().  "Patting the Dog" occurs every one minute.
-  ■  Added logging of remoteIP.             ■
-  ■  Added viewing of remoteIP.             ■
+  ■  Changed Ethernet library -- remoteIP.  ■     for  "Patting the Dog," (SwitchDoc Labs, "Dual Watchdog Timer") 
+  ■  Added logging of remoteIP.             ■     occurs every one minute
+  ■  Added viewing of remoteIP.             ■     
   ■  Modified dht22 function                ■
-  ■                                         ■
+  ■                                         ■     **** See line 267 comment ************ regarding previous upload.
   ■  Adapted by "tech500" with the          ■ 
   ■  help of "Adafruit Forum"               ■
  
 */ 
 // ********************************************************************************
 //
-//   See invidual downloads for each library license. 
+//   See invidual downloads for each library license.
 //   
 //   Following code was developed by merging library examples, adding
 //   logic for sketch flow.
@@ -97,6 +97,13 @@ float difference;
 
 #define RESET_WATCHDOG1 6  //SwitchDoc Labs external Watchdog Dual Timer
 
+#define Q 31 //74LS73 Q --Red
+#define CP 34  //74LS73 CP --Yellow
+
+
+//JP3 goes LOW to reset Arduino Mega
+bool value;
+
 long int id = 1;  //Increments record number
 
 String dtStamp;
@@ -171,10 +178,18 @@ void error_P(const char* str)
 ////////////////
 void setup(void)
 {
-	
-    pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
-    
-    Serial.begin(115200);
+  
+  pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
+
+  pinMode(CP, OUTPUT);
+  
+  pinMode(Q, INPUT);
+  
+  //delay(6000);
+  
+  
+  
+  Serial.begin(115200);
 
     sd.begin(chipSelect);
 
@@ -225,48 +240,43 @@ void setup(void)
     Serial.print(LISTEN_PORT);
     Serial.println("");
 
-
-    getDateTime();
+	getDateTime();
     Serial.println("Connected to LAN:  " + dtStamp);
     Serial.println(F("Listening for connections..."));
-	Serial.flush();
+  
     Serial.end();
-
-
-    //If used this creates an entry in "Server.txt" for every start; when Serial Monitor is opened.
-    // If "Server.txt" exists; wifi reconnection, restarts are appended to file; 
-    SdFile serverFile;
-    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
-    if (!serverFile.isOpen()) error("Server");
-    {
-		serverFile.println("Starting server:  " + dtStamp);
-		serverFile.close(); 
-    } 
-
-
-
-/*  //Uncomment to set Real Time Clock --only needs to be run once; then comment out.
-	//Used to Set Time and Date of the DS1307 Real Time Clock
+	
+	delay(500);
+    
+	reset();
+/*  
+  //Uncomment to set Real Time Clock --only needs to be run once; then comment out.
+  //Used to Set Time and Date of the DS1307 Real Time Clock
     
     RTCTimedEvent.time.second = 00;
-    RTCTimedEvent.time.minute =53;
-    RTCTimedEvent.time.hour = 19;
-    RTCTimedEvent.time.dayOfWeek  = 5;
-    RTCTimedEvent.time.day = 31;
-    RTCTimedEvent.time.month = 12;
-    RTCTimedEvent.time.year = 2015;
+    RTCTimedEvent.time.minute = 32;
+    RTCTimedEvent.time.hour = 15;
+    RTCTimedEvent.time.dayOfWeek  = 7;
+    RTCTimedEvent.time.day = 6;
+    RTCTimedEvent.time.month = 2;
+    RTCTimedEvent.time.year = 2016;
     RTCTimedEvent.writeRTC();
-*/	
-	//initial buffer timer
-	RTCTimedEvent.initialCapacity = sizeof(RTCTimerInformation)*3;
-	
-	//event for every minute
-	RTCTimedEvent.addTimer(TIMER_ANY, //minute
+
+*/
+
+//Timer initilization was commented out; previous uplod to Adafruit.
+
+  //initial buffer timer
+  RTCTimedEvent.initialCapacity = sizeof(RTCTimerInformation)*3;
+  
+  //event for every minute
+  RTCTimedEvent.addTimer(TIMER_ANY, //minute
                          TIMER_ANY, //hour
                          TIMER_ANY, //day fo week
                          TIMER_ANY, //day
                          TIMER_ANY, //month
                          minuteCall);
+
 
   
     // uncomment for different initialization settings
@@ -376,8 +386,8 @@ void ListFiles(EthernetClient client, uint8_t flags, SdFile dir)
 void loop()
 {
 
+	//reset();
  
-  	
   RTCTimedEvent.loop();
   delay(50);
   RTCTimedEvent.readRTC();
@@ -388,7 +398,7 @@ void loop()
   ((RTCTimedEvent.time.minute) == 58) &&
   ((RTCTimedEvent.time.second) == 00)))
   {
-	newDay();
+  newDay();
   }
 
   //Collect Data at 15 minute interval
@@ -524,10 +534,6 @@ void logtoSD()   //Output to SD Card every fifthteen minutes
       
     }
   }
-  else
-  {
-    exit;
-  }
   Serial.flush();
   Serial.end();
   }
@@ -569,7 +575,7 @@ void listen()   // Listen for client connection
     if (client) 
     {
       
-	    Serial.println("");
+      Serial.println("");
         Serial.println(F("Client connected."));
         // Process this request until it completes or times out.
         // Note that this is explicitly limited to handling one request at a time!
@@ -606,17 +612,17 @@ void listen()   // Listen for client connection
     {
     
     Serial.print("Client IP address:  ");
-	Serial.println(client.remoteIP());
-	Serial.println(F("Processing request"));
-	Serial.print(F("Action: ")); Serial.println(action);
-	Serial.print(F("Path: ")); Serial.println(path); 
+  Serial.println(client.remoteIP());
+  Serial.println(F("Processing request"));
+  Serial.print(F("Action: ")); Serial.println(action);
+  Serial.print(F("Path: ")); Serial.println(path); 
     
       
       if((fileDownload) == 1)   //File download has started
       {
         exit;   //Skip logging this time --file download in progress
       }
-      else
+      else  
       {
           
         if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")== 0))  //Log all server access except "favicon.ico"
@@ -631,15 +637,14 @@ void listen()   // Listen for client connection
           IPAddress ip1(10,0,0,15);  //Server ip address
           IPAddress ip2(10,0,0,146);  //Host ip address
 
-          //Do not list Host computer ip
-          if ((client.remoteIP()) = ip2)  //Compare client ip address with Host ip address 
-          {
-            exit;  //if Host computer; do not log 
+          //Do not log Host computer ip
+          if ((client.remoteIP() == ip2))   //Compare client ip address with Host ip address 
+      {
+      exit;
           }
-          else
-          {
-          
-            logFile.print("Accessed:  ");
+      else
+      {
+        logFile.print("Accessed:  ");
             getDateTime(); //get accessed date and time
             logFile.print(dtStamp + " -- ");
             logFile.print(client.remoteIP());
@@ -647,9 +652,9 @@ void listen()   // Listen for client connection
             logFile.print("Path:  ");
             logFile.println(path);
             logFile.close();
-          }
-        }
-        exit;
+           }
+    }
+        
       }     
       // Check the action to see if it was a GET request.
       if(strcmp(path, "/favicon.ico") == 0)
@@ -853,7 +858,7 @@ void listen()   // Listen for client connection
           else 
           {
 
-          fileDownload = 1;   //File download has started
+          fileDownload = 1;   //File download has started; used to stop logFile from logging during download
 
           //client.println("Content-Type: text/plain");
           client.println("Content-Type: text/plain");
@@ -886,11 +891,11 @@ void listen()   // Listen for client connection
           file.close();
           }
 
-          fileDownload = 0;  //File download has finished
+          fileDownload = 0;  //File download has finished; allow logging since download has completed
 
       } 
       // Check the action to see if it was a GET request.
-      else if ((strcmp(path, "/lucid500.txt") == 0))   // Respond with the path that was accessed.                                                         
+      else if ((strcmp(path, "/lucid-500.txt") == 0))   // Respond with the path that was accessed.                                                         
       { 
          // Open ACCESS.TXT for reading
          SdFile webFile;
@@ -1016,23 +1021,66 @@ void parseFirstLine(char* line, char* action, char* path)
   strncpy(path, linepath, MAX_PATH);
 }
 
+////////////
+void reset()
+{
+
+  Serial.begin(115200);
+  
+  value = (digitalRead(Q)); 
+  delay(100);
+  if((value) == 0)
+  {
+   
+    //Creates an entry in "Server.txt" for every RESET cause by "Dual Watchdog Timer"
+    SdFile serverFile;
+    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
+        
+      if (!serverFile.isOpen()) error("Watchdog Start Server"); 
+      serverFile.println("Watchdog Starting Server:  " + dtStamp);
+      serverFile.close();
+      Serial.print(" Watchdog  ");
+	  Serial.println(value);
+      delay(5);
+      //digitalWrite(CP, LOW);  
+      digitalWrite(CP, HIGH);
+  }
+  else 
+  {
+  
+    //Creates an entry in "Server.txt" for every RESET; caused by opening Serial Monitor
+    SdFile serverFile;
+    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
+      
+      if (!serverFile.isOpen()) error("Manual Start Server");
+      serverFile.println("Manual Starting Server:  " + dtStamp);
+      Serial.print(" Manual  ");
+	  Serial.println(value);
+      serverFile.close(); 
+      delay(5);
+      //digitalWrite(CP, LOW); 
+      digitalWrite(CP, HIGH);
+  }
+  Serial.end();  
+}
 ////////////////////////////////////////////
 void minuteCall(RTCTimerInformation* Sender) 
 {
-	
-	//Sends pulse to keep external "SwitchDoc Labs," "Dual Watchdog Timer" alive	
-	pinMode(RESET_WATCHDOG1, OUTPUT);
-	delay(200);
-	pinMode(RESET_WATCHDOG1, INPUT);
-	
-	
+
+  //Sends pulse to keep external "SwitchDoc Labs, Dual Watchdog Timer" alive  
+  pinMode(RESET_WATCHDOG1, OUTPUT);
+  delay(200);
+  pinMode(RESET_WATCHDOG1, INPUT); 
+  
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  DS1307 Date and Time Stamping  Orginal function by
 //  Bernhard    http://www.backyardaquaponics.com/forum/viewtopic.php?f=50&t=15687
 //  Modified by Tech500 to use RTCTimedEvent library
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
+
 String getDateTime()
 {
 
