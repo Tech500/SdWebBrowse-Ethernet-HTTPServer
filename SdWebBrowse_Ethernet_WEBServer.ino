@@ -1,21 +1,23 @@
 /********************************************************************************  
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 30.1    ■                   Version 30.1 Correction
-  ■  Last modified 2/14/2016 @ 00:27 EST    ■
+  ■  Using Arduino Mega 2560 --Rev. 30.2    ■                   Version 31 
+  ■  Last modified 2/28/2016 @ 06:04 EST    ■
   ■  Ethernet Shield version                ■
-  ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of ""SwitchDoc Labs,
+  ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
   ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
   ■  Added SwitchDoc Labs Watchdog Dual     ■
   ■  Timer 12/30/2015                       ■     Used RTCEventTimer library feature to initalize a minute timer
-  ■  Changed Ethernet library -- remoteIP.  ■     for  "Patting the Dog," (SwitchDoc Labs, "Dual Watchdog Timer") 
-  ■  Added logging of remoteIP.             ■     occurs every one minute
+  ■  Changed Ethernet library -- remoteIP.  ■     for keeping SwitchDoc Labs, "Dual Watchdog Timer" from sending RESET
+  ■  Added logging of remoteIP.             ■     signal to Arduino Mega 2560.
   ■  Added viewing of remoteIP.             ■     
   ■  Modified dht22 function                ■
-  ■                                         ■     **** See line 267 comment ************ regarding previous upload.
+  ■                                         ■    
   ■  Adapted by "tech500" with the          ■ 
   ■  help of "Adafruit Forum"               ■
- 
+
+ C:\Users\lcs--\Google Drive\■ Project ■\Ethernet\SdWebBrowse_Ethernet_WEBServer\Revision 30.2\SdWebBrowse_Ethernet_WebServer.ino
+  
 */ 
 // ********************************************************************************
 //
@@ -100,8 +102,8 @@ float difference;
 #define Q 31 //74LS73 Q --Red
 #define CP 34  //74LS73 CP --Yellow
 
-
 //JP3 goes LOW to reset Arduino Mega
+
 bool value;
 
 long int id = 1;  //Increments record number
@@ -172,28 +174,23 @@ void error_P(const char* str)
     Serial.println(card.errorData(), HEX);
   }
 
-  while(1);
+  while(1); 
 }
 
 ////////////////
 void setup(void)
 {
   
-  pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
+    pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
 
-  pinMode(CP, OUTPUT);
+    pinMode(Q, INPUT);  //Pin monitoring status of 74HC73, J-K Flip-flop
+    //pinMode(Q, INPUT_PULLUP);  //Enable Arduino, pin 31 internal, pull-up resistor.
   
-  pinMode(Q, INPUT);
-  
-  //delay(6000);
-  
-  
-  
-  Serial.begin(115200);
+    Serial.begin(9600);
 
     sd.begin(chipSelect);
 
-    if (!sd.begin(SPI_HALF_SPEED, chipSelect)) sd.initErrorHalt();
+    //if (!sd.begin(SPI_HALF_SPEED, chipSelect)) sd.initErrorHalt();
 
     dht.begin();
 
@@ -210,7 +207,7 @@ void setup(void)
     if (!card.init(SPI_HALF_SPEED, chipSelect)) error("card.init failed!");
 
     // initialize a FAT volume
-    if (!volume.init(&card)) error("vol.init failed!");
+    if (!volume.init(&card)) error("vol.init failed!");  
 
     PgmPrint("Volume is FAT");
     Serial.println(volume.fatType(),DEC);
@@ -224,8 +221,8 @@ void setup(void)
     Serial.println();
 
     // Recursive list of all directories
-    PgmPrintln("Files found in all dirs:");
-    root.ls(LS_R);
+    //PgmPrintln("Files found in all dirs:");
+    //root.ls(LS_R);
 
     Serial.println();
     //PgmPrintln("Done");
@@ -240,15 +237,71 @@ void setup(void)
     Serial.print(LISTEN_PORT);
     Serial.println("");
 
-	getDateTime();
+  getDateTime();
     Serial.println("Connected to LAN:  " + dtStamp);
     Serial.println(F("Listening for connections..."));
   
     Serial.end();
-	
-	delay(500);
+  
+  
+ Serial.begin(9600);
+  
+  getDateTime();
+  delay(250);
+ 
+  value = digitalRead(Q); 
+  delay(500);
+
+ if((value) == 1) 
+ {
+
+    //Creates an entry in "Server.txt" for every RESET cause by "Dual Watchdog Timer"
+    SdFile serverFile;
+    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
+       
+    if (!serverFile.isOpen()) error("Watchdog Start Server");
     
-	reset();
+  serverFile.println("Watchdog Starting Server:  " + dtStamp);
+  serverFile.close();
+  Serial.print(" Watchdog  ");
+  Serial.println(dtStamp + "  ");
+  //Serial.println(value);
+  
+  //Sends LOW to CP of the 74HC73, J-K Flip-flop 
+  digitalWrite(CP, LOW);
+  delay(500);
+  digitalWrite(CP, HIGH);
+    
+    
+  }
+  else if((value) == 0)
+  {
+  
+    //Creates an entry in "Server.txt" for every RESET; caused by opening Serial Monitor
+    SdFile serverFile;
+    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
+     
+    if (!serverFile.isOpen()) error("Manual Start Server");
+    
+    serverFile.println("Manual Starting Server:  " + dtStamp);
+    serverFile.close();  
+    Serial.print(" Manual  ");
+    Serial.println(dtStamp + "  ");
+    //Serial.println(value);
+  
+    //Sends LOW to CP of the 74HC73, J-K Flip-flop 
+    digitalWrite(CP, LOW);
+    delay(500);
+    digitalWrite(CP, HIGH);
+    
+  }
+  
+  
+  
+  Serial.end();
+ 
+
+  
 /*  
   //Uncomment to set Real Time Clock --only needs to be run once; then comment out.
   //Used to Set Time and Date of the DS1307 Real Time Clock
@@ -264,19 +317,18 @@ void setup(void)
 
 */
 
-//Timer initilization was commented out; previous uplod to Adafruit.
+
 
   //initial buffer timer
   RTCTimedEvent.initialCapacity = sizeof(RTCTimerInformation)*3;
-  
+
   //event for every minute
   RTCTimedEvent.addTimer(TIMER_ANY, //minute
-                         TIMER_ANY, //hour
-                         TIMER_ANY, //day fo week
-                         TIMER_ANY, //day
-                         TIMER_ANY, //month
-                         minuteCall);
-
+             TIMER_ANY, //hour
+             TIMER_ANY, //day fo week
+             TIMER_ANY, //day
+             TIMER_ANY, //month
+             minuteCall);
 
   
     // uncomment for different initialization settings
@@ -386,8 +438,6 @@ void ListFiles(EthernetClient client, uint8_t flags, SdFile dir)
 void loop()
 {
 
-	//reset();
- 
   RTCTimedEvent.loop();
   delay(50);
   RTCTimedEvent.readRTC();
@@ -439,7 +489,7 @@ void loop()
 void logtoSD()   //Output to SD Card every fifthteen minutes
 {
   
-  Serial.begin(115200);
+  Serial.begin(9600);
 
 
   if((fileDownload) == 1)   //File download has started
@@ -565,7 +615,7 @@ void lcdDisplay()   //   LCD 1602 Display function
 void listen()   // Listen for client connection
 {
 
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   fileDownload = 0;   //No file being downloaded
 
@@ -804,7 +854,7 @@ void listen()   // Listen for client connection
       else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0) || (strcmp(path, "/WATCHDOG.TXT") == 0)) // Respond with the path that was accessed. 
       { 
             
-        Serial.begin(115200);
+        Serial.begin(9600);
 
         static char MyBuffer[13];
 
@@ -813,7 +863,7 @@ void listen()   // Listen for client connection
 
         {
         strcpy( MyBuffer, path );
-        Serial.begin( 115200 );
+        Serial.begin( 9600 );
         filename = &MyBuffer[1];
         //Serial.println(filename);
         }
@@ -1021,48 +1071,6 @@ void parseFirstLine(char* line, char* action, char* path)
   strncpy(path, linepath, MAX_PATH);
 }
 
-////////////
-void reset()
-{
-
-  Serial.begin(115200);
-  
-  value = (digitalRead(Q)); 
-  delay(100);
-  if((value) == 0)
-  {
-   
-    //Creates an entry in "Server.txt" for every RESET cause by "Dual Watchdog Timer"
-    SdFile serverFile;
-    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
-        
-      if (!serverFile.isOpen()) error("Watchdog Start Server"); 
-      serverFile.println("Watchdog Starting Server:  " + dtStamp);
-      serverFile.close();
-      Serial.print(" Watchdog  ");
-	  Serial.println(value);
-      delay(5);
-      //digitalWrite(CP, LOW);  
-      digitalWrite(CP, HIGH);
-  }
-  else 
-  {
-  
-    //Creates an entry in "Server.txt" for every RESET; caused by opening Serial Monitor
-    SdFile serverFile;
-    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
-      
-      if (!serverFile.isOpen()) error("Manual Start Server");
-      serverFile.println("Manual Starting Server:  " + dtStamp);
-      Serial.print(" Manual  ");
-	  Serial.println(value);
-      serverFile.close(); 
-      delay(5);
-      //digitalWrite(CP, LOW); 
-      digitalWrite(CP, HIGH);
-  }
-  Serial.end();  
-}
 ////////////////////////////////////////////
 void minuteCall(RTCTimerInformation* Sender) 
 {
@@ -1232,7 +1240,7 @@ void newDay()   //Collect Data for twenty-four hours; then start a new day
   SdFile logFile("log.txt", O_WRITE | O_CREAT | O_APPEND);
   if (!logFile.isOpen()) error("log");
   {
-    Serial.begin(115200);
+    Serial.begin(9600);
 
     delay(1000);
       logFile.println(", , , , , ,"); //Just a leading blank line, in case there was previous data
@@ -1285,7 +1293,7 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
   logFile.println("");
   logFile.close();
 
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   Serial.println("");
   Serial.println("New LOG.TXT created");
