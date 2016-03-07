@@ -1,7 +1,7 @@
 /********************************************************************************  
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 30.2    ■                   Version 31 
+  ■  Using Arduino Mega 2560 --Rev. 30.2    ■                   Version 31, Formatted
   ■  Last modified 2/28/2016 @ 06:04 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
@@ -100,7 +100,7 @@ float difference;
 #define RESET_WATCHDOG1 6  //SwitchDoc Labs external Watchdog Dual Timer
 
 #define Q 31 //74LS73 Q --Red
-#define CP 34  //74LS73 CP --Yellow
+#define RESET 34  //74LS73 RESET --Yellow
 
 //JP3 goes LOW to reset Arduino Mega
 
@@ -184,8 +184,7 @@ void setup(void)
     pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
 
     pinMode(Q, INPUT);  //Pin monitoring status of 74HC73, J-K Flip-flop
-    //pinMode(Q, INPUT_PULLUP);  //Enable Arduino, pin 31 internal, pull-up resistor.
-  
+      
     Serial.begin(9600);
 
     sd.begin(chipSelect);
@@ -237,98 +236,90 @@ void setup(void)
     Serial.print(LISTEN_PORT);
     Serial.println("");
 
-  getDateTime();
+    getDateTime();
     Serial.println("Connected to LAN:  " + dtStamp);
     Serial.println(F("Listening for connections..."));
   
-    Serial.end();
-  
-  
- Serial.begin(9600);
-  
-  getDateTime();
-  delay(250);
- 
-  value = digitalRead(Q); 
-  delay(500);
+	value = digitalRead(Q); 
+	delay(500);
 
- if((value) == 1) 
- {
+	if((value) == 1) 
+	{
 
-    //Creates an entry in "Server.txt" for every RESET cause by "Dual Watchdog Timer"
-    SdFile serverFile;
-    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
-       
-    if (!serverFile.isOpen()) error("Watchdog Start Server");
-    
-  serverFile.println("Watchdog Starting Server:  " + dtStamp);
-  serverFile.close();
-  Serial.print(" Watchdog  ");
-  Serial.println(dtStamp + "  ");
-  //Serial.println(value);
-  
-  //Sends LOW to CP of the 74HC73, J-K Flip-flop 
-  digitalWrite(CP, LOW);
-  delay(500);
-  digitalWrite(CP, HIGH);
-    
-    
-  }
-  else if((value) == 0)
-  {
-  
-    //Creates an entry in "Server.txt" for every RESET; caused by opening Serial Monitor
-    SdFile serverFile;
-    serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
-     
-    if (!serverFile.isOpen()) error("Manual Start Server");
-    
-    serverFile.println("Manual Starting Server:  " + dtStamp);
-    serverFile.close();  
-    Serial.print(" Manual  ");
-    Serial.println(dtStamp + "  ");
-    //Serial.println(value);
-  
-    //Sends LOW to CP of the 74HC73, J-K Flip-flop 
-    digitalWrite(CP, LOW);
-    delay(500);
-    digitalWrite(CP, HIGH);
-    
-  }
-  
-  
-  
-  Serial.end();
+		//Creates an entry in "Server.txt" for every RESET cause by "Dual Watchdog Timer"
+		SdFile serverFile;
+		serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
+		   
+		if (!serverFile.isOpen()) error("Watchdog Start Server");
+
+		serverFile.println("Watchdog Starting Server:  " + dtStamp);
+		serverFile.close();
+		Serial.print(" Watchdog  ");
+		Serial.println(dtStamp + "  ");
+		//Serial.println(value);
+
+		//Sends LOW to RESET of the 74HC73, J-K Flip-flop 
+		digitalWrite(RESET, LOW);
+		delay(500);
+		digitalWrite(RESET, HIGH);
+
+
+	}
+	else if((value) == 0)
+	{
+
+		//Creates an entry in "Server.txt" for every RESET; caused by opening Serial Monitor
+		SdFile serverFile;
+		serverFile.open("Server.txt", O_RDWR | O_CREAT | O_APPEND);
+		 
+		if (!serverFile.isOpen()) error("Manual Start Server");
+
+		serverFile.println("Manual Starting Server:  " + dtStamp);
+		serverFile.close();  
+		Serial.print(" Manual  ");
+		Serial.println(dtStamp + "  ");
+		//Serial.println(value);
+
+		//Sends LOW to RESET of the 74HC73, J-K Flip-flop 
+		digitalWrite(RESET, LOW);
+		delay(500);
+		digitalWrite(RESET, HIGH);
+
+	}
+
+
+
+	Serial.end();
  
 
   
 /*  
-  //Uncomment to set Real Time Clock --only needs to be run once; then comment out.
-  //Used to Set Time and Date of the DS1307 Real Time Clock
-    
-    RTCTimedEvent.time.second = 00;
-    RTCTimedEvent.time.minute = 32;
-    RTCTimedEvent.time.hour = 15;
-    RTCTimedEvent.time.dayOfWeek  = 7;
-    RTCTimedEvent.time.day = 6;
-    RTCTimedEvent.time.month = 2;
-    RTCTimedEvent.time.year = 2016;
-    RTCTimedEvent.writeRTC();
+	//Uncomment to set Real Time Clock --only needs to be run once; then comment out.
+	//Used to Set Time and Date of the DS1307 Real Time Clock
+
+	RTCTimedEvent.time.second = 00;
+	RTCTimedEvent.time.minute = 32;
+	RTCTimedEvent.time.hour = 15;
+	RTCTimedEvent.time.dayOfWeek  = 7;
+	RTCTimedEvent.time.day = 6;
+	RTCTimedEvent.time.month = 2;
+	RTCTimedEvent.time.year = 2016;
+	RTCTimedEvent.writeRTC();
 
 */
 
 
 
-  //initial buffer timer
-  RTCTimedEvent.initialCapacity = sizeof(RTCTimerInformation)*3;
+	//initial buffer timer
+	RTCTimedEvent.initialCapacity = sizeof(RTCTimerInformation)*3;
 
-  //event for every minute
-  RTCTimedEvent.addTimer(TIMER_ANY, //minute
-             TIMER_ANY, //hour
-             TIMER_ANY, //day fo week
-             TIMER_ANY, //day
-             TIMER_ANY, //month
-             minuteCall);
+	//event for every minute
+	RTCTimedEvent.addTimer(TIMER_ANY, //minute
+		TIMER_ANY, //hour
+		TIMER_ANY, //day fo week
+		TIMER_ANY, //day
+		TIMER_ANY, //month
+		minuteCall);
 
   
     // uncomment for different initialization settings
@@ -438,50 +429,50 @@ void ListFiles(EthernetClient client, uint8_t flags, SdFile dir)
 void loop()
 {
 
-  RTCTimedEvent.loop();
-  delay(50);
-  RTCTimedEvent.readRTC();
-  delay(50);
+	RTCTimedEvent.loop();
+	delay(50);
+	RTCTimedEvent.readRTC();
+	delay(50);
 
-  //Collect  "log.txt" Data for one day; do it early so day of week still equals 7
-  if ((((RTCTimedEvent.time.hour) == 23 )  &&
-  ((RTCTimedEvent.time.minute) == 58) &&
-  ((RTCTimedEvent.time.second) == 00)))
-  {
-  newDay();
-  }
+	//Collect  "log.txt" Data for one day; do it early so day of week still equals 7
+	if ((((RTCTimedEvent.time.hour) == 23 )  &&
+	((RTCTimedEvent.time.minute) == 58) &&
+	((RTCTimedEvent.time.second) == 00)))
+	{
+	newDay();
+	}
 
-  //Collect Data at 15 minute interval
-  if ((((RTCTimedEvent.time.minute) == 0)||
-  ((RTCTimedEvent.time.minute) == 15)||
-  ((RTCTimedEvent.time.minute) == 30)||
-  ((RTCTimedEvent.time.minute) == 45))
-  && ((RTCTimedEvent.time.second) == 00))
-  {
+	//Collect Data at 15 minute interval
+	if ((((RTCTimedEvent.time.minute) == 0)||
+	((RTCTimedEvent.time.minute) == 15)||
+	((RTCTimedEvent.time.minute) == 30)||
+	((RTCTimedEvent.time.minute) == 45))
+	&& ((RTCTimedEvent.time.second) == 00))
+	{
 
-  getDateTime();
+		getDateTime();
 
-  lastUpdate = dtStamp;  //store dtstamp for use on dynamic web page, listen function
+		lastUpdate = dtStamp;  //store dtstamp for use on dynamic web page, listen function
 
-  getDHT22();
+		getDHT22();
 
-  getBMP085();
+		getBMP085();
 
-  updateDifference();  //Get Barometric Pressure difference
+		updateDifference();  //Get Barometric Pressure difference
 
-  logtoSD();   //Output to SD Card  --Log to SD on 15 minute interval.
-    
-  delay(100);  //Be sure there is enough SD write time
+		logtoSD();   //Output to SD Card  --Log to SD on 15 minute interval.
 
-  //lcdDisplay();      //   LCD 1602 Display function --used for 15 minute update
+		delay(100);  //Be sure there is enough SD write time
 
-  pastPressure = (Pressure *  0.000295333727);   //convert to inches mercury
-  
-  }
-  else
-  {
-  listen();  //Listen for web client
-  }
+		//lcdDisplay();      //   LCD 1602 Display function --used for 15 minute update
+
+		pastPressure = (Pressure *  0.000295333727);   //convert to inches mercury
+
+	}
+	else
+	{
+		listen();  //Listen for web client
+	}
 
 }
   
@@ -489,125 +480,123 @@ void loop()
 void logtoSD()   //Output to SD Card every fifthteen minutes
 {
   
-  Serial.begin(9600);
+	Serial.begin(9600);
 
 
-  if((fileDownload) == 1)   //File download has started
-  {
-  exit;   //Skip logging this time --file download in progress
-  }
-  else 
-  {
+	if((fileDownload) == 1)   //File download has started
+	{
+		exit;   //Skip logging this time --file download in progress
+	}
+	else 
+	{
 
-    // Open a "log.txt" for appended writing
-    SdFile logFile;
-    logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
-    if (!logFile.isOpen()) error("log");
-      
+		// Open a "log.txt" for appended writing
+		SdFile logFile;
+		logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
+		if (!logFile.isOpen()) error("log");
+		  
+		//logFile.print(id);
+		//logFile.print(" , ");
+		logFile.print(dtStamp) + " EST";
+		logFile.print(" , ");
+		logFile.print("Humidity:  ");
+		logFile.print(h);
+		logFile.print(" % , ");
+		logFile.print("Dew Point:  ");
+		logFile.print((dewPoint) + (9/5 + 32));
+		logFile.print(" F. , ");
+		logFile.print(f);
+		logFile.print("  F. , ");
+		// Reading temperature or humidity takes about 250 milliseconds!
+		// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+		logFile.print("Heat Index:  ");
+		logFile.print(hi);
+		logFile.print(" F. ");
+		logFile.print(" , ");
+		//logFile.print((Pressure *  0.000295333727), 3);  //Convert Pascals to inches of Mecury
+		logFile.print(currentPressure,3);
+		logFile.print(" in. Hg. ");
+		logFile.print(" , ");
 
-    
-    //logFile.print(id);
-    //logFile.print(" , ");
-    logFile.print(dtStamp) + " EST";
-    logFile.print(" , ");
-    logFile.print("Humidity:  ");
-    logFile.print(h);
-    logFile.print(" % , ");
-    logFile.print("Dew Point:  ");
-    logFile.print((dewPoint) + (9/5 + 32));
-    logFile.print(" F. , ");
-    logFile.print(f);
-    logFile.print("  F. , ");
-    // Reading temperature or humidity takes about 250 milliseconds!
-    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    logFile.print("Heat Index:  ");
-    logFile.print(hi);
-    logFile.print(" F. ");
-    logFile.print(" , ");
-    //logFile.print((Pressure *  0.000295333727), 3);  //Convert Pascals to inches of Mecury
-    logFile.print(currentPressure,3);
-    logFile.print(" in. Hg. ");
-    logFile.print(" , ");
-    
-  if (pastPressure == currentPressure)
-    {
-    logFile.print("0.000");
-    logFile.print(" Difference ");
-    logFile.print(" ,");
-    }
-    else
-    {
-    logFile.print((difference),3);
-    logFile.print(" Difference ");
-    logFile.print(", ");
-    }
-    
-    logFile.print(milliBars,3);  //Convert Pascals to millibars
-    logFile.print(" millibars ");
-    logFile.print(" , ");
-    logFile.print((Pressure * 0.00000986923267), 3);   //Convert Pascals to Atm (atmospheric pressure)
-    logFile.print(" atm ");
-    logFile.print(" , ");
-    logFile.print(Altitude * 0.0328084);  //Convert cm to Feet
-    logFile.print(" Ft. ");
-    logFile.println();
-    //Increment Record ID number 
-    //id++;
-    Serial.println("");
-    Serial.print("Data written to logFile  " + dtStamp);
-  Serial.println("");
-  Serial.flush();
+		if (pastPressure == currentPressure)
+		{
+		logFile.print("0.000");
+		logFile.print(" Difference ");
+		logFile.print(" ,");
+		}
+		else
+		{
+		logFile.print((difference),3);
+		logFile.print(" Difference ");
+		logFile.print(", ");
+		}
 
-    logFile.close();
-        
-  if(abs(difference) >= .020)  //After testing and observations of Data; raised from .010 to .020 inches of Mecury
-  {
-      // Open a "Differ.txt" for appended writing --records Barometric Pressure change difference and time stamps
-      SdFile diffFile;
-    diffFile.open("Differ.txt", O_WRITE | O_CREAT | O_APPEND);
-    if (!diffFile.isOpen()) error("diff");
-    {
-      Serial.println("");
-      Serial.print("Difference greater than .020 inches of Mecury ,  ");
-      Serial.print(difference, 3);
-      Serial.print("  ,");
-      Serial.print(dtStamp);
+		logFile.print(milliBars,3);  //Convert Pascals to millibars
+		logFile.print(" millibars ");
+		logFile.print(" , ");
+		logFile.print((Pressure * 0.00000986923267), 3);   //Convert Pascals to Atm (atmospheric pressure)
+		logFile.print(" atm ");
+		logFile.print(" , ");
+		logFile.print(Altitude * 0.0328084);  //Convert cm to Feet
+		logFile.print(" Ft. ");
+		logFile.println();
+		//Increment Record ID number 
+		//id++;
+		Serial.println("");
+		Serial.print("Data written to logFile  " + dtStamp);
+		Serial.println("");
+		Serial.flush();
 
-      diffFile.println("");
-      diffFile.print("Difference greater than .020 inches of Mecury,  ");
-      diffFile.print(difference, 3);
-      diffFile.print("  ,");
-      diffFile.print(dtStamp);
-      diffFile.close();
+		logFile.close();
+			
+		if(abs(difference) >= .020)  //After testing and observations of Data; raised from .010 to .020 inches of Mecury
+		{
+			// Open a "Differ.txt" for appended writing --records Barometric Pressure change difference and time stamps
+			SdFile diffFile;
+			diffFile.open("Differ.txt", O_WRITE | O_CREAT | O_APPEND);
+			if (!diffFile.isOpen()) error("diff");
+			{
+			    Serial.println("");
+				Serial.print("Difference greater than .020 inches of Mecury ,  ");
+				Serial.print(difference, 3);
+				Serial.print("  ,");
+				Serial.print(dtStamp);
 
-      beep(50);  //Duration of Sonalert tone
-      
-    }
-  }
-  Serial.flush();
-  Serial.end();
-  }
+				diffFile.println("");
+				diffFile.print("Difference greater than .020 inches of Mecury,  ");
+				diffFile.print(difference, 3);
+				diffFile.print("  ,");
+				diffFile.print(dtStamp);
+				diffFile.close();
+
+				beep(50);  //Duration of Sonalert tone
+
+			}
+		}
+		Serial.flush();
+		Serial.end();
+	}
 }
 
 /////////////////
 void lcdDisplay()   //   LCD 1602 Display function
 {
     
-  lcd.clear();
-  // set up the LCD's number of rows and columns:
-  lcd.backlight();
-  lcd.noAutoscroll();
-  lcd.setCursor(0, 0);
-  // Print Barometric Pressure
-  lcd.print((Pressure *  0.000295333727),3);   //convert to inches mercury
-  lcd.print(" in. Hg.");
-  // set the cursor to column 0, line 1
-  // (note: line 1 is the second row, since counting begins with 0):
-  lcd.setCursor(0, 1);
-  // print millibars
-  lcd.print(((Pressure) * .01),3);   //convert to millibars
-  lcd.print(" mb.    ");
-  lcd.print("");
+	lcd.clear();
+	// set up the LCD's number of rows and columns:
+	lcd.backlight();
+	lcd.noAutoscroll();
+	lcd.setCursor(0, 0);
+	// Print Barometric Pressure
+	lcd.print((Pressure *  0.000295333727),3);   //convert to inches mercury
+	lcd.print(" in. Hg.");
+	// set the cursor to column 0, line 1
+	// (note: line 1 is the second row, since counting begins with 0):
+	lcd.setCursor(0, 1);
+	// print millibars
+	lcd.print(((Pressure) * .01),3);   //convert to millibars
+	lcd.print(" mb.    ");
+	lcd.print("");
 
 }
 
@@ -615,419 +604,420 @@ void lcdDisplay()   //   LCD 1602 Display function
 void listen()   // Listen for client connection
 {
 
-  Serial.begin(9600);
+	Serial.begin(9600);
 
-  fileDownload = 0;   //No file being downloaded
+	fileDownload = 0;   //No file being downloaded
 
-  EthernetClient client = server.available();
-  client.setTimeout(250);
+	EthernetClient client = server.available();
+	client.setTimeout(250);
      
     if (client) 
     {
       
-      Serial.println("");
-        Serial.println(F("Client connected."));
-        // Process this request until it completes or times out.
-        // Note that this is explicitly limited to handling one request at a time!
+		Serial.println("");
+		Serial.println(F("Client connected."));
+		// Process this request until it completes or times out.
+		// Note that this is explicitly limited to handling one request at a time!
 
-        // Clear the incoming data buffer and point to the beginning of it.
-        bufindex = 0;
-        memset(&buffer, 0, sizeof(buffer));
-        
-        // Clear action and path strings.
-        memset(&action, 0, sizeof(action));
-        memset(&path,   0, sizeof(path));
+		// Clear the incoming data buffer and point to the beginning of it.
+		bufindex = 0;
+		memset(&buffer, 0, sizeof(buffer));
+		
+		// Clear action and path strings.
+		memset(&action, 0, sizeof(action));
+		memset(&path,   0, sizeof(path));
 
-        // Set a timeout for reading all the incoming data.
-        unsigned long endtime = millis() + TIMEOUT_MS;
-        
-        // Read all the incoming data until it can be parsed or the timeout expires.
-        bool parsed = false;
-      
-      while (!parsed && (millis() < endtime) && (bufindex < BUFFER_SIZE))
-      {
-        if (client.available()) 
-        {
-            buffer[bufindex++] = client.read(); 
-        }
+		// Set a timeout for reading all the incoming data.
+		unsigned long endtime = millis() + TIMEOUT_MS;
+		
+		// Read all the incoming data until it can be parsed or the timeout expires.
+		bool parsed = false;
+	  
+		while (!parsed && (millis() < endtime) && (bufindex < BUFFER_SIZE))
+		{
+			if (client.available()) 
+			{
+				buffer[bufindex++] = client.read(); 
+			}
 
-        parsed = parseRequest(buffer, bufindex, action, path);
-        
-      }
-      
+			parsed = parseRequest(buffer, bufindex, action, path);
 
-    
-    // Handle the request if it was parsed. 
-    if (parsed) 
-    {
-    
-    Serial.print("Client IP address:  ");
-  Serial.println(client.remoteIP());
-  Serial.println(F("Processing request"));
-  Serial.print(F("Action: ")); Serial.println(action);
-  Serial.print(F("Path: ")); Serial.println(path); 
-    
-      
-      if((fileDownload) == 1)   //File download has started
-      {
-        exit;   //Skip logging this time --file download in progress
-      }
-      else  
-      {
-          
-        if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")== 0))  //Log all server access except "favicon.ico"
-        { 
+		}
+		  
 
-          // Open a "access.txt" for appended writing.   Client access ip address logged.
-          SdFile logFile;
-          logFile.open("access.txt", O_WRITE | O_CREAT | O_APPEND);
+		
+		// Handle the request if it was parsed.  
+		if (parsed) 
+		{ 
 
-          if (!logFile.isOpen()) error("log");
-
-          IPAddress ip1(10,0,0,15);  //Server ip address
-          IPAddress ip2(10,0,0,146);  //Host ip address
-
-          //Do not log Host computer ip
-          if ((client.remoteIP() == ip2))   //Compare client ip address with Host ip address 
-      {
-      exit;
-          }
-      else
-      {
-        logFile.print("Accessed:  ");
-            getDateTime(); //get accessed date and time
-            logFile.print(dtStamp + " -- ");
-            logFile.print(client.remoteIP());
-            logFile.print(" -- ");
-            logFile.print("Path:  ");
-            logFile.println(path);
-            logFile.close();
-           }
-    }
-        
-      }     
-      // Check the action to see if it was a GET request.
-      if(strcmp(path, "/favicon.ico") == 0)
-      {
-          
-          client.println("HTTP/1.1 200 OK"); //send new page
-          client.println("Content-Type: image/ico");
-          client.println("Connnection: close");
-          client.println();
-
-          // Open "FAVICON.ICO for reading
-          SdFile webFile;
-          webFile.open("FAVICON.ICO", O_READ);
-          if (!webFile.isOpen()) error("favicon.ico");
-
-          if (webFile.available()) 
-          {
-            byte clientBuf[64];
-            int clientCount = 0;
-
-            while(webFile.available())
-            {
-
-              clientBuf[clientCount] = webFile.read();
-              clientCount++;
-
-              if(clientCount > 63)
-              {
-              //Serial.println("Packet sent");
-              client.write(clientBuf,64);
-              clientCount = 0;
-              }
-            }
-            //final <64 byte cleanup packet
-            
-            if(clientCount > 0) client.write(clientBuf,clientCount);           
-            // close the file:
-            webFile.close();
-          } 
-
-      }              
-      // Check the action to see if it was a GET request.
-      else if ((strcmp(path, "/Weather") == 0))   // Respond with the path that was accessed.                                                         
-      { 
-        
-        // First send the success response code.
-        client.println("HTTP/1.1 200 OK");
-        client.println("Content-Type: text");
-        client.println("Connnection: close");
-        client.println("Server: Ethernet");
-        // Send an empty line to signal start of body.
-        client.println("");
-        // Now send the response data; output dynamic webpage
-        client.println("<!DOCTYPE HTML><html lang='en-US'>");
-        client.println("<html>\r\n");
-        client.println("<body>\r\n");
-        client.println("<head>\r\n");
-        client.println("<title>Weather Observations</title>");
-        client.println("<h2>Treyburn Lakes</h2><br />");
-        client.println("</head>");
-        // add a meta refresh tag, so the browser pulls again every 15 seconds:
-        //client.println("<meta http-equiv=\"refresh\" content=\"15\">");
-        client.println("Indianapolis, IN 46239<br />");
-        client.println("Last Update:  ");  
-        client.println(lastUpdate);
-        client.println(" EST <br />"); 
-        //delay(500);
-        client.println("Humidity:  ");
-        client.print(h, 2); 
-        client.print(" %<br />");
-        client.println("Dew Point:  ");
-        client.print((dewPoint) + (9/5 + 32));
-        client.print(" F. <br />");
-        client.println("Temperature:  ");
-        client.print(f);
-        client.print(" F.<br />");
-        // Reading temperature or humidity takes about 250 milliseconds!
-        // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-        delay(500);
-        client.println("Heat Index:  ");
-        client.print(hi);
-        client.print(" F. <br />");
-        client.println("Barometric Pressure:  ");
-        client.print(currentPressure);  
-        client.print(" in. Hg.<br />");
-
-        if (pastPressure == currentPressure)
-        {
-          client.println("Difference last 15 Minutes:   ");
-          client.print((difference),3);
-          client.print("<br />");
-        }
-        else 
-        {
-          client.println("Difference last 15 Minutes:   ");
-          client.println((difference),3);
-          client.print("<br />");
-        }
-
-        client.println("Barometric Pressure:  ");
-        client.println(milliBars);
-        client.println(" millBars <br />");
-        client.println("Atmosphere:  ");
-        client.print(Pressure * 0.00000986923267, 3);   //Convert Pascals to Atm (atmospheric pressure)
-        client.print(" atm <br />");
-        client.println("Altitude:  ");
-        client.print(Altitude * 0.0328084, 2);  //Convert cm to Feet
-        client.print(" Feet<br />");
-        client.println("<br /><br />");
-        client.println("<h2>Collected Observations</h2>");
-        client.println("</head>");
-        //Must modify "your external ip and port.  Port is assigned port in this sketch.
-        client.println("<a href=http://68.45.231.214:7388/LOG.TXT download>Download: Current Collected Observations</a><br />");  //Change to external ip; forward port
-        client.println("<br />\r\n");
-        client.println("<a href= http://68.45.231.214:7388/SdBrowse >View: Previous Collected Observations</a><br />");   //Change to external ip; forward port
-        client.println("<br />\r\n");
-        client.println("<body />\r\n"); 
-        client.println("</html>\r\n");
-
-        exit; 
-        
-      } 
-      // Check the action to see if it was a GET request.
-      else if (strcmp(path, "/SdBrowse") == 0) // Respond with the path that was accessed.  
-      {         
-    
-        // send a standard http response header
-        client.println("HTTP/1.1 200 OK");
-        client.println("Content-Type: text/html");
-        client.println();
-        client.println("<!DOCTYPE HTML>");
-        client.println("<html>\r\n");
-        client.println("<body>\r\n");
-        client.println("<head><title>SDBrowse</title><head />");
-        // print all the files, use a helper to keep it clean
-        client.println("<h2>Server Files:</h2>");
-        ListFiles(client, LS_SIZE, root);
-        client.println("<body />\r\n");
-        client.println("<br />\r\n");
-        client.println("</html>\r\n");
-
-        delay(500);
-
-        exit;
-      
-      }   
-      else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0) || (strcmp(path, "/WATCHDOG.TXT") == 0)) // Respond with the path that was accessed. 
-      { 
-            
-        Serial.begin(9600);
-
-        static char MyBuffer[13];
-
-        char *filename;
-        char name;
-
-        {
-        strcpy( MyBuffer, path );
-        Serial.begin( 9600 );
-        filename = &MyBuffer[1];
-        //Serial.println(filename);
-        }
-          
-          if (filename == "FAVICON.ICO")
-          {
-            exit;
-          }
-      
-        
-        Serial.flush();
+			Serial.print("Client IP address:  ");
+			Serial.println(client.remoteIP());
+			Serial.println(F("Processing request"));
+			Serial.print(F("Action: ")); Serial.println(action);
+			Serial.print(F("Path: ")); Serial.println(path); 
 
 
-        SdFile webFile;
-        if (! webFile.open(&root, filename, O_READ)) 
-        {
+			if((fileDownload) == 1)   //File download has started
+			{
+				exit;   //Skip logging this time --file download in progress
+			}
+			else  
+			{
+			  
+				if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")== 0))  //Log all server access except "favicon.ico"
+				{ 
 
-          client.println("HTTP/1.1 404 Not Found");
-          client.println("Content-Type: text/html");
-          client.println();
-          client.println("<h2>File Not Found!</h2>");
-          client.println("<br><h1>Couldn't open the File!</h3>");
-          exit;
-        }
-        
-        if (!webFile.isOpen()) error("text file");
+					// Open a "access.txt" for appended writing.   Client access ip address logged.
+					SdFile logFile;
+					logFile.open("access.txt", O_WRITE | O_CREAT | O_APPEND);
 
-          client.println("HTTP/1.1 200 OK");
-            
-          if(file.isDir()) 
-          {
-            Serial.println("is directory");
-            //file.close();
-            client.println("Content-Type: text/html");
-            client.println();
-            client.print("<h2>Files in /");
-            client.print(name);
-            client.println("/:</h2>");
-            ListFiles(client,LS_SIZE,file);
-            file.close();
-          }
-          else 
-          {
+					if (!logFile.isOpen()) error("log");
 
-          fileDownload = 1;   //File download has started; used to stop logFile from logging during download
+					IPAddress ip1(10,0,0,15);  //Server ip address
+					IPAddress ip2(10,0,0,146);  //Host ip address
 
-          //client.println("Content-Type: text/plain");
-          client.println("Content-Type: text/plain");
-          client.println("Content-Disposition: attachment");
-          client.println("Content-Length:");
-          client.println();
+					//Do not log Host computer ip
+					if ((client.remoteIP() == ip2))   //Compare client ip address with Host ip address 
+					{
+						exit;
+					}
+					else
+					{
+						logFile.print("Accessed:  ");
+						getDateTime(); //get accessed date and time
+						logFile.print(dtStamp + " -- ");
+						logFile.print(client.remoteIP());
+						logFile.print(" -- ");
+						logFile.print("Path:  ");
+						logFile.println(path);
+						logFile.close();
+					}
+				}
 
-          do   // @ adafruit_support_rick's do-while loop
-          {
-            int count = 0;
-            char buffers[BUFSIZE];
-            bool done = false;
-            
-            while ((!done) && (count < BUFSIZE) && (webFile.available()))
-            {
-              char c = webFile.read();
-              if (0 > c)
-              done = true;
-              else
-              buffers[count++] = c;
-              delayMicroseconds(1000);
-            }
-          
-            if (count)
-            client.write( buffers, count);
+			}     
+			// Check the action to see if it was a GET request.
+			if(strcmp(path, "/favicon.ico") == 0)
+			{
+			  
+				client.println("HTTP/1.1 200 OK"); //send new page
+				client.println("Content-Type: image/ico");
+				client.println("Connnection: close");
+				client.println();
 
-          } while (webFile.available());
+				// Open "FAVICON.ICO for reading
+				SdFile webFile;
+				webFile.open("FAVICON.ICO", O_READ);
+				if (!webFile.isOpen()) error("favicon.ico");
+
+				if (webFile.available()) 
+				{
+					byte clientBuf[64];
+					int clientCount = 0;
+
+					while(webFile.available())
+					{
+
+						clientBuf[clientCount] = webFile.read();
+						clientCount++;
+
+						if(clientCount > 63)
+						{
+						//Serial.println("Packet sent");
+						client.write(clientBuf,64);
+						clientCount = 0;
+						}
+					}
+					//final <64 byte cleanup packet
+
+					if(clientCount > 0) client.write(clientBuf,clientCount);           
+					// close the file:
+					webFile.close();
+				} 
+
+			}              
+			// Check the action to see if it was a GET request.
+			else if ((strcmp(path, "/Weather") == 0))   // Respond with the path that was accessed.                                                         
+			{ 
+			
+				// First send the success response code.
+				client.println("HTTP/1.1 200 OK");
+				client.println("Content-Type: text");
+				client.println("Connnection: close");
+				client.println("Server: Ethernet");
+				// Send an empty line to signal start of body.
+				client.println("");
+				// Now send the response data; output dynamic webpage
+				client.println("<!DOCTYPE HTML><html lang='en-US'>");
+				client.println("<html>\r\n");
+				client.println("<body>\r\n");
+				client.println("<head>\r\n");
+				client.println("<title>Weather Observations</title>");
+				client.println("<h2>Treyburn Lakes</h2><br />");
+				client.println("</head>");
+				// add a meta refresh tag, so the browser pulls again every 15 seconds:
+				//client.println("<meta http-equiv=\"refresh\" content=\"15\">");
+				client.println("Indianapolis, IN 46239<br />");
+				client.println("Last Update:  ");  
+				client.println(lastUpdate);
+				client.println(" EST <br />"); 
+				//delay(500);
+				client.println("Humidity:  ");
+				client.print(h, 2); 
+				client.print(" %<br />");
+				client.println("Dew Point:  ");
+				client.print((dewPoint) + (9/5 + 32));
+				client.print(" F. <br />");
+				client.println("Temperature:  ");
+				client.print(f);
+				client.print(" F.<br />");
+				// Reading temperature or humidity takes about 250 milliseconds!
+				// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+				delay(500);
+				client.println("Heat Index:  ");
+				client.print(hi);
+				client.print(" F. <br />");
+				client.println("Barometric Pressure:  ");
+				client.print(currentPressure);  
+				client.print(" in. Hg.<br />");
+
+				if (pastPressure == currentPressure)
+				{
+					client.println("Difference last 15 Minutes:   ");
+					client.print((difference),3);
+					client.print("<br />");
+				}
+				else 
+				{
+					client.println("Difference last 15 Minutes:   ");
+					client.println((difference),3);
+					client.print("<br />");
+				}
+
+				client.println("Barometric Pressure:  ");
+				client.println(milliBars);
+				client.println(" millBars <br />");
+				client.println("Atmosphere:  ");
+				client.print(Pressure * 0.00000986923267, 3);   //Convert Pascals to Atm (atmospheric pressure)
+				client.print(" atm <br />");
+				client.println("Altitude:  ");
+				client.print(Altitude * 0.0328084, 2);  //Convert cm to Feet
+				client.print(" Feet<br />");
+				client.println("<br /><br />");
+				client.println("<h2>Collected Observations</h2>");
+				client.println("</head>");
+				//Must modify "your external ip and port.  Port is assigned port in this sketch.
+				client.println("<a href=http://69.245.183.113:7388/LOG.TXT download>Download: Current Collected Observations</a><br />");  //Change to external ip; forward port
+				client.println("<br />\r\n");
+				client.println("<a href= http://69.245.183.113:7388/SdBrowse >View: Previous Collected Observations</a><br />");   //Change to external ip; forward port
+				client.println("<br />\r\n");
+				client.println("<body />\r\n"); 
+				client.println("</html>\r\n");
+
+				exit; 
+
+			} 
+			// Check the action to see if it was a GET request.
+			else if (strcmp(path, "/SdBrowse") == 0) // Respond with the path that was accessed.  
+			{         
+
+				// send a standard http response header
+				client.println("HTTP/1.1 200 OK");
+				client.println("Content-Type: text/html");
+				client.println();
+				client.println("<!DOCTYPE HTML>");
+				client.println("<html>\r\n");
+				client.println("<body>\r\n");
+				client.println("<head><title>SDBrowse</title><head />");
+				// print all the files, use a helper to keep it clean
+				client.println("<h2>Server Files:</h2>");
+				ListFiles(client, LS_SIZE, root);
+				client.println("<body />\r\n");
+				client.println("<br />\r\n");
+				client.println("</html>\r\n");
+
+				delay(500);
+
+				exit;
+
+			}   
+			else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0) || (strcmp(path, "/WATCHDOG.TXT") == 0)) // Respond with the path that was accessed. 
+			{ 
+				
+				Serial.begin(9600);
+
+				static char MyBuffer[13];
+
+				char *filename;
+				char name;
+
+				{
+				strcpy( MyBuffer, path );
+				Serial.begin( 9600 );
+				filename = &MyBuffer[1];
+				//Serial.println(filename);
+				}
+				  
+					if (filename == "FAVICON.ICO")
+					{
+					e	xit;
+					}
 
 
-          file.close();
-          }
-
-          fileDownload = 0;  //File download has finished; allow logging since download has completed
-
-      } 
-      // Check the action to see if it was a GET request.
-      else if ((strcmp(path, "/lucid-500.txt") == 0))   // Respond with the path that was accessed.                                                         
-      { 
-         // Open ACCESS.TXT for reading
-         SdFile webFile;
-         webFile.open("ACCESS.TXT", O_READ);
-        
-        if (!webFile.isOpen()) error("log");   
-            
-        fileDownload = 1;   //File download has started
-        
-        client.println("HTTP/1.1 200 OK");
-        client.println("Content-Type: text/plain");                  
-        client.println("Content-Disposition: attachment");
-        client.println("Content-Length:");
-        client.println("Connnection: close");
-        client.println();
-        
-        do   // @ adafruit_support_rick's do-while loop
-        {
-          int count = 0;
-          char buffers[BUFSIZE];
-          bool done = false;
-
-          while ((!done) && (count < BUFSIZE) && (webFile.available()))
-          {
-            char c = webFile.read();
-            if (0 > c)
-            done = true;
-            else
-            buffers[count++] = c;
-            delayMicroseconds(1000);
-          }
-
-          if (count)
-          client.write( buffers, count);
-          
-        } while (webFile.available());
-        
-        webFile.close();
-          
-        fileDownload = 0;  //File download has finished
-
-        Serial.println("webFile Closed");
-        Serial.flush();
+				Serial.flush();
 
 
-        exit;
-      }
-      else 
-      {
-        // everything else is a 404
-        client.println("HTTP/1.1 404 Not Found");
-        client.println("Content-Type: text/html");
-        client.println();
-        client.println("<h2>404</h2>");
-        client.println("<h2>File Not Found!</h2>");
-      }
-      exit;
-    }
-    else 
-    {
-      // Unsupported action, respond with an HTTP 405 method not allowed error.
-      client.println("HTTP/1.1 405 Method Not Allowed");
-      client.println("");
-        
-    }
-    exit;      
-    
-    // Wait a short period to make sure the response had time to send before
-    // the connection is closed.
-    delay(1000);
-          
-    // Close the connection when done.
-    Serial.println("Client closed");
-  
-    client.stop();
-      
-    }
-  Serial.flush();
-  Serial.end();
+				SdFile webFile;
+				if (! webFile.open(&root, filename, O_READ)) 
+				{ 
+
+					client.println("HTTP/1.1 404 Not Found");
+					client.println("Content-Type: text/html");
+					client.println();
+					client.println("<h2>File Not Found!</h2>");
+					client.println("<br><h1>Couldn't open the File!</h3>");
+					exit;
+				}
+
+				if (!webFile.isOpen()) error("text file");
+
+					client.println("HTTP/1.1 200 OK");
+
+					if(file.isDir()) 
+					{
+						Serial.println("is directory");
+						//file.close();
+						client.println("Content-Type: text/html");
+						client.println();
+						client.print("<h2>Files in /");
+						client.print(name);
+						client.println("/:</h2>");
+						ListFiles(client,LS_SIZE,file);
+						file.close();
+					}
+					else 
+					{
+
+						fileDownload = 1;   //File download has started; used to stop logFile from logging during download
+
+						//client.println("Content-Type: text/plain");
+						client.println("Content-Type: text/plain");
+						client.println("Content-Disposition: attachment");
+						client.println("Content-Length:");
+						client.println();
+
+						do   // @ adafruit_support_rick's do-while loop
+						{
+							int count = 0;
+							char buffers[BUFSIZE];
+							bool done = false;
+
+							while ((!done) && (count < BUFSIZE) && (webFile.available()))
+							{
+								char c = webFile.read();
+								if (0 > c)
+								done = true;
+								else
+								buffers[count++] = c;
+								delayMicroseconds(1000);
+							}
+
+							if (count)
+							client.write( buffers, count);
+
+						} while (webFile.available());
+
+
+						file.close();
+					}
+
+					fileDownload = 0;  //File download has finished; allow logging since download has completed
+
+			} 
+			// Check the action to see if it was a GET request.
+			else if ((strcmp(path, "/lucid-500.txt") == 0))   // Respond with the path that was accessed.                                                         
+			{ 
+				
+				// Open ACCESS.TXT for reading
+				SdFile webFile;
+				webFile.open("ACCESS.TXT", O_READ);
+
+				if (!webFile.isOpen()) error("log");   
+					
+				fileDownload = 1;   //File download has started
+
+				client.println("HTTP/1.1 200 OK");
+				client.println("Content-Type: text/plain");                  
+				client.println("Content-Disposition: attachment");
+				client.println("Content-Length:");
+				client.println("Connnection: close");
+				client.println();
+
+				do   // @ adafruit_support_rick's do-while loop
+				{
+					int count = 0;
+					char buffers[BUFSIZE];
+					bool done = false;
+
+					while ((!done) && (count < BUFSIZE) && (webFile.available()))
+					{
+						char c = webFile.read();
+						if (0 > c)
+						done = true;
+						else
+						buffers[count++] = c;
+						delayMicroseconds(1000);
+					}
+
+					if (count)
+					client.write( buffers, count);
+				  
+				} while (webFile.available());
+
+				webFile.close();
+				  
+				fileDownload = 0;  //File download has finished
+
+				Serial.println("webFile Closed");
+				Serial.flush();
+
+
+				exit;
+			}
+			else 
+			{
+				// everything else is a 404
+				client.println("HTTP/1.1 404 Not Found");
+				client.println("Content-Type: text/html");
+				client.println();
+				client.println("<h2>404</h2>");
+				client.println("<h2>File Not Found!</h2>");
+			}
+			exit;
+		} 
+		else 
+		{
+			// Unsupported action, respond with an HTTP 405 method not allowed error.
+			client.println("HTTP/1.1 405 Method Not Allowed");
+			client.println("");
+
+		}
+		exit;      
+		
+		// Wait a short period to make sure the response had time to send before
+		// the connection is closed.
+		delay(1000);
+			  
+		// Close the connection when done.
+		Serial.println("Client closed");
+	  
+		client.stop();
+		  
+    } 
+	Serial.flush();
+	Serial.end();
 }      
 
-
+////////////////////////////////////////////////////////////////////////////////
 // Return true if the buffer contains an HTTP request.  Also returns the request
 // path and action strings if the request was parsed.  This does not attempt to
 // parse any HTTP headers because there really isn't enough memory to process
@@ -1041,44 +1031,45 @@ void listen()   // Listen for client connection
 //////////////////////////////////////////////////////////////////////
 bool parseRequest(uint8_t* buf, int bufSize, char* action, char* path) 
 {
-  // Check if the request ends with \r\n to signal end of first line.
-  if (bufSize < 2)
-  return false;
-   
-  if (buf[bufSize-2] == '\r' && buf[bufSize-1] == '\n') 
-  {
-  parseFirstLine((char*)buf, action, path);
-  return true;
-  }
-  return false;
+	// Check if the request ends with \r\n to signal end of first line.
+	if (bufSize < 2)
+	return false;
+
+	if (buf[bufSize-2] == '\r' && buf[bufSize-1] == '\n') 
+	{
+		parseFirstLine((char*)buf, action, path);
+		return true;
+	}
+	return false;
 }
 
+////////////////////////////////////////////////////////////////////
 // Parse the action and path from the first line of an HTTP request.
-/////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 void parseFirstLine(char* line, char* action, char* path) 
 {
-  // Parse first word up to whitespace as action.
-  char* lineaction = strtok(line, " ");
+	// Parse first word up to whitespace as action.
+	char* lineaction = strtok(line, " ");
 
-  if (lineaction != NULL)
+	if (lineaction != NULL)
 
-  strncpy(action, lineaction, MAX_ACTION);
-  // Parse second word up to whitespace as path.
-  char* linepath = strtok(NULL, " ");
+	strncpy(action, lineaction, MAX_ACTION);
+	// Parse second word up to whitespace as path.
+	char* linepath = strtok(NULL, " ");
 
-  if (linepath != NULL)
+	if (linepath != NULL)
 
-  strncpy(path, linepath, MAX_PATH);
+	strncpy(path, linepath, MAX_PATH);
 }
 
 ////////////////////////////////////////////
 void minuteCall(RTCTimerInformation* Sender) 
 {
 
-  //Sends pulse to keep external "SwitchDoc Labs, Dual Watchdog Timer" alive  
-  pinMode(RESET_WATCHDOG1, OUTPUT);
-  delay(200);
-  pinMode(RESET_WATCHDOG1, INPUT); 
+	//Sends pulse to keep external "SwitchDoc Labs, Dual Watchdog Timer" alive  
+	pinMode(RESET_WATCHDOG1, OUTPUT);
+	delay(200);
+	pinMode(RESET_WATCHDOG1, INPUT); 
   
 }
 
@@ -1087,8 +1078,6 @@ void minuteCall(RTCTimerInformation* Sender)
 //  Bernhard    http://www.backyardaquaponics.com/forum/viewtopic.php?f=50&t=15687
 //  Modified by Tech500 to use RTCTimedEvent library
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-
 String getDateTime()
 {
 
@@ -1155,31 +1144,31 @@ String getDateTime()
 ////////////////
 float getDHT22()
 {
-  // Wait a few seconds between measurements.
-  delay(2000);
+	// Wait a few seconds between measurements.
+	delay(2000);
 
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  h = dht.readHumidity();
-  // Read temperature as Celsius
-  t = dht.readTemperature();
-  // Read temperature as Fahrenheit
-  f = dht.readTemperature(true);
+	// Reading temperature or humidity takes about 250 milliseconds!
+	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+	h = dht.readHumidity();
+	// Read temperature as Celsius
+	t = dht.readTemperature();
+	// Read temperature as Fahrenheit
+	f = dht.readTemperature(true);
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(h) || isnan(t) || isnan(f)) 
-  {
-    Serial.println("Failed to read from DHT sensor!");
-  }
+	// Check if any reads failed and exit early (to try again).
+	if (isnan(h) || isnan(t) || isnan(f)) 
+	{
+	Serial.println("Failed to read from DHT sensor!");
+	}
 
-  // Compute heat index 
-  // Must send in temp in Fahrenheit!
-  hi = dht.computeHeatIndex(f, h);
+	// Compute heat index 
+	// Must send in temp in Fahrenheit!
+	hi = dht.computeHeatIndex(f, h);
 
-  double VaporPressureValue = h * 0.01 * 6.112 * exp((17.62 * t) / (t + 243.12));
-  double Numerator =243.12 * log(VaporPressureValue) - 440.1;
-  double Denominator = 19.43 - (log(VaporPressureValue));
-  dewPoint = Numerator / Denominator;
+	double VaporPressureValue = h * 0.01 * 6.112 * exp((17.62 * t) / (t + 243.12));
+	double Numerator =243.12 * log(VaporPressureValue) - 440.1;
+	double Denominator = 19.43 - (log(VaporPressureValue));
+	dewPoint = Numerator / Denominator;
 } 
 ////////////////
 void getBMP085()   //Get Barometric pressure readings
@@ -1198,16 +1187,16 @@ float updateDifference()  //Pressure difference for fifthteen minute interval
 {
 
 
-  //Function to find difference in Barometric Pressure
-  //First loop pass pastPressure and currentPressure are equal resulting in an incorrect difference result.  Output "...Processing"
-  //Future loop passes difference results are correct
+	//Function to find difference in Barometric Pressure
+	//First loop pass pastPressure and currentPressure are equal resulting in an incorrect difference result.  Output "...Processing"
+	//Future loop passes difference results are correct
 
-  difference = currentPressure - pastPressure;  //This will be pressure from this pass thru loop, pressure1 will be new pressure reading next loop pass
-  if (difference == currentPressure)
-  {
-    difference = 0; 
-  }   
-  return(difference);  //Barometric pressure change in inches of Mecury 
+	difference = currentPressure - pastPressure;  //This will be pressure from this pass thru loop, pressure1 will be new pressure reading next loop pass
+	if (difference == currentPressure)
+	{
+	difference = 0; 
+	}   
+	return(difference);  //Barometric pressure change in inches of Mecury 
   
 }
 
@@ -1215,42 +1204,42 @@ float updateDifference()  //Pressure difference for fifthteen minute interval
 void beep(unsigned char delayms)
 {
   
-  delay(3000);          // wait for a delayms ms
-  digitalWrite(sonalertPin, HIGH);       // High turns on Sonalert tone
-  delay(3000); 
-  digitalWrite(sonalertPin, LOW);  //Low turns of Sonalert tone
+	delay(3000);          // wait for a delayms ms
+	digitalWrite(sonalertPin, HIGH);       // High turns on Sonalert tone
+	delay(3000); 
+	digitalWrite(sonalertPin, LOW);  //Low turns of Sonalert tone
 
-  // wait for a delayms ms   
+	// wait for a delayms ms   
 }  
 
 /////////////
 void newDay()   //Collect Data for twenty-four hours; then start a new day
 {
 
-  //Do file maintence on 7th day of week at appointed time from RTC.  Assign new name to "log.txt."  Create new "log.txt."
-  if ((RTCTimedEvent.time.dayOfWeek) == 7)
-  {
-    fileStore();
-  }
+	//Do file maintence on 7th day of week at appointed time from RTC.  Assign new name to "log.txt."  Create new "log.txt."
+	if ((RTCTimedEvent.time.dayOfWeek) == 7)
+	{
+		fileStore();
+	}
 
-  //id = 1;   //Reset id for start of new day
-  //Write logFile Header
+	//id = 1;   //Reset id for start of new day
+	//Write logFile Header
 
-  // Open file from appended writing
-  SdFile logFile("log.txt", O_WRITE | O_CREAT | O_APPEND);
-  if (!logFile.isOpen()) error("log");
-  {
-    Serial.begin(9600);
+	// Open file from appended writing
+	SdFile logFile("log.txt", O_WRITE | O_CREAT | O_APPEND);
+	if (!logFile.isOpen()) error("log");
+	{
+		Serial.begin(9600);
 
-    delay(1000);
-      logFile.println(", , , , , ,"); //Just a leading blank line, in case there was previous data
-      logFile.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
-      logFile.close();
-    Serial.println("");
-      Serial.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
-    Serial.flush();
-    Serial.end();
-  }
+		delay(1000);
+		logFile.println(", , , , , ,"); //Just a leading blank line, in case there was previous data
+		logFile.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
+		logFile.close();
+		Serial.println("");
+		Serial.println("Date, Time, Humidity, Dew Point, Temperature, Heat Index, in. Hg., Difference, millibars, atm, Altitude");
+		Serial.flush();
+		Serial.end();
+	}
 
 
 }
@@ -1260,49 +1249,49 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
 {
 
   
-  // create a file and write one line to the file
-  SdFile logFile("log.txt", O_WRITE | O_CREAT );
-  
-  if (!logFile.isOpen()) 
-  {
-    error("log -open");
-  }
+	// create a file and write one line to the file
+	SdFile logFile("log.txt", O_WRITE | O_CREAT );
 
-  // rename the file log.txt
-  // sd.vwd() is the volume working directory, root. 
+	if (!logFile.isOpen()) 
+	{
+		error("log -open");
+	}
 
-  logFileName = ""; 
-  logFileName = "log";
-  logFileName += (RTCTimedEvent.time.month);
-  logFileName += (RTCTimedEvent.time.day);
-  logFileName += ".txt"; 
-  //Serial.println(logFileName.c_str());
+	// rename the file log.txt
+	// sd.vwd() is the volume working directory, root. 
 
-  if(sd.exists("log.txt"))
-  { 
-    logFile.rename(sd.vwd(), logFileName.c_str());
-    logFile.close();
-  }
-  else
-  {
-  exit;
-  }
+	logFileName = ""; 
+	logFileName = "log";
+	logFileName += (RTCTimedEvent.time.month);
+	logFileName += (RTCTimedEvent.time.day);
+	logFileName += ".txt"; 
+	//Serial.println(logFileName.c_str());
 
-  // create a new "log.txt" file for appended writing
-  logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
-  logFile.println("");
-  logFile.close();
+	if(sd.exists("log.txt"))
+	{ 
+		logFile.rename(sd.vwd(), logFileName.c_str());
+		logFile.close();
+	}
+	else
+	{
+	exit;
+	}
 
-  Serial.begin(9600);
+	// create a new "log.txt" file for appended writing
+	logFile.open("log.txt", O_WRITE | O_CREAT | O_APPEND);
+	logFile.println("");
+	logFile.close();
 
-  Serial.println("");
-  Serial.println("New LOG.TXT created");
+	Serial.begin(9600);
 
-  // list files
-  cout << pstr("------") << endl;
-  sd.ls(LS_R);
+	Serial.println("");
+	Serial.println("New LOG.TXT created");
 
-  Serial.flush();
-  Serial.end();
+	// list files
+	cout << pstr("------") << endl;
+	sd.ls(LS_R);
+
+	Serial.flush();
+	Serial.end();
 
 }
