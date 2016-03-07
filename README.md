@@ -15,4 +15,4 @@ http://tinyurl.com/sketch-project
 
 ~Four minute video of project web interface.
 
-Project web page:  http://tinyurl.com/Data500
+Project web page:  http://tinyurl.com/weather-server
