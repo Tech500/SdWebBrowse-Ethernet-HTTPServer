@@ -16,8 +16,8 @@
   ■  Adapted by "tech500" with the          ■ 
   ■  help of "Adafruit Forum"               ■
 
- C:\Users\lcs--\Google Drive\■ Project ■\Ethernet\SdWebBrowse_Ethernet_WEBServer\Revision 30.2\SdWebBrowse_Ethernet_WebServer.ino
-  
+ This is the version running on the server.
+ 
 */ 
 // ********************************************************************************
 //
