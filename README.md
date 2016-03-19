@@ -25,4 +25,6 @@ Now Features:
    
 11. "SwitchDoc Labs, Dual Watchdog Timer" added to project; resets Arduino Mega in case Sketch execution fails.
 
-12. Added a 74HC73, JK Flip-flop to differentiate which reset: a "Dual Watchdog Timer" reset or a "Manual" reset, for example opening "Serial Monitor" or pressing "Reset" switch on the Arduino Mega.  
+12. Added a 74HC73, JK Flip-flop to differentiate which reset: a "Dual Watchdog Timer" reset or a "Manual" reset, for example opening "Serial Monitor" or pressing "Reset" switch on the Arduino Mega.
+
+Project web page:  http://tinyurl.com/weather-server
