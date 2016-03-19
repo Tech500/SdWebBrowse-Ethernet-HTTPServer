@@ -1,18 +1,28 @@
-# SdWebBrowse-Ethernet-WEBServer
-Arduino Mega Sketch; web server, file browser, data logger
+﻿SdWebBrowse_Ethernet_WebServer.ino is a datalogger and web server.  Current revision is 31, Formatted.
 
-“SDWebBrowse_Ethernet_WEBServer.ino” is basically an Arduino Mega, Data logger with sensors; “Weather” web page is a dynamic web page interface controlled by a Real Time Clock and accessible from anywhere with internet connectivity. Two Hyperlinks on the dynamic web page allow for downloading current collection of data in the log file, up to the last update. Second Hyperlink goes to the “SdBrowse” web page which, reads the SD card from the Ethernet Shield, displays list of files, each filename displayed is a Hyperlink that when selected, displays the text file.
+Requires Arduino Mega 2560, Ethernet Shield and Real time clock, and Sensors for Humidity/Temperature and Barometric pressure.
+Now Features:
 
-Development of Sketch was accomplished combining Arduino and open source library examples and creating Arduino C++ code to accomplish task goals and to provide logic flow. Sketch is written using functions, and with embedded comments. Function examples: dtStamp function takes the output from the DS1307 real time clock and formats the output in month, day, year and hour, minute, second. Other functions; getBMP085 gets Barometric pressure, getDHT22 get humidity and temperature readings, newDay starts logging a new day at midnight daily, fileStore manages file size by renaming “LOG.TXT” file using the format “LOGXXYY.TXT,” “XX” being the month and “YY” being the date on Saturday of the current week; creating a new “LOG.TXT” file at a three of minutes before midnight on Saturday.
+1. Real Time Clock; used for 15 minute time interval, date and time stamping and dayofweek (every 7th day, log.txt file gets renamed to keep file size manageable. Every Saturday (7th day of week) log.txt gets renamed in the format "logxxyy” xx being the month and yy being the date; a new log.txt is created after file renaming.
 
-Project started off with a simple Sketch to read Barometric Pressure; now every 15 minutes, it writes Data record of date and time, humidity, dew point, temperature, heat index, barometric pressure, in both inches of Mercury and millibars to file “LOG.TXT.” Weekly collected files are able to be displayed for viewing using “SdBrowse” web page. Significant changes in Barometric pressure are logged to a file on the SD Card named: “DIFFER.TXT” presently, set for a change greater than or equal to “.020” inches of Mercury. Every time the server is accessed, an entry with the client remote IP is logged to file “ACCESS.TXT.” Describing briefly the purpose of each file is the file “README.TXT”.
+2. Dynamic web page displays current observations for Last update time and date, Humidity, dew point, temperature, heat index, Barometric Pressure both inches of Mercury and millibars.
 
-Components that were used in this project; Arduino Mega 2560 Rev 3, Ethernet Shield Rev. 3, DS1307 real time clock, DHT22 humidity sensor, GY-65 model of the BMP085 Barometric sensor for the ability to handle +5 Volts, a Field Effect Transistor, a Piezo electric buzzer and a few Resistors. Piezo electric buzzer is used to alert to a significant change in barometric pressure; although, currently it is set for greater than or equal to .020 inch of Mercury change, it is easily changed in the Sketch.
+3. Server files are listed as web links; clicking link opens a prompt to: "Open with/Save as." "System~1/", "Favicon.ico", and "Access" are listed; however, they are for internal use and cannot be "Opened with/Save as," result of clicking link produces "404 Page not found."
 
-Sketch involves working with components and Arduino programing; Arduino Mega, Ethernet Shield with SD Card, Web server, Data logger, File management, LCD Display, Real Time Clock, Humidity and Temperature sensor, and Barometric sensor, making this project a useful tool in learning to program and work with the Arduino!
+4. Log.txt file is appended every 15 minutes with the latest update; storing data from Dynamic web page.
 
-http://tinyurl.com/sketch-project
+5. Access.txt stores Client ip address; requires special Ethernet.h file. Web link provided in Sketch source code.  
 
-~Four minute video of project web interface.
+6. Differ.txt stores the difference in barometric pressure for the last fifteen minutes. Only a difference of equal to or greater than .020 inches of Mercury are logged with difference, date and time.
 
-Project web page:  http://tinyurl.com/weather-server
+7. Server.txt is used is used to log Server RESETS caused by "SwitchDoc Labs, Dual Watchdog Timer" "Watchdog Starting Server" entries in the Server.txt file are from a reset from the "Dual Watchdog Timer" or a "Manual Starting Server." 
+
+8. URL addresses other than ones defined in the Sketch produce "404 Page not found."
+
+9. Audible alert from Piezo electric buzzer when there is Barometric Pressure difference of .020 inches of Mercury.  I am interested in sudden drop of Barometric pressure in a 15 minute interval. Serve weather more likely with a sudden drop.  Difference of .020 inches of Mercury point is set for my observations to log and sound audible alert; not based on any known value to be associated with serve weather.
+
+10. Two-line LCD Display of Barometric Pressure in both inches of Mercury and millibars.
+   
+11. "SwitchDoc Labs, Dual Watchdog Timer" added to project; resets Arduino Mega in case Sketch execution fails.
+
+12. Added a 74HC73, JK Flip-flop to differentiate which reset: a "Dual Watchdog Timer" reset or a "Manual" reset, for example opening "Serial Monitor" or pressing "Reset" switch on the Arduino Mega.  
