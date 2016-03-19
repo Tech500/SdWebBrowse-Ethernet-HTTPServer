@@ -1,6 +1,8 @@
 ﻿SdWebBrowse_Ethernet_WebServer.ino is a datalogger and web server.  Current revision is 31, Formatted.
 
 Requires Arduino Mega 2560, Ethernet Shield and Real time clock, and Sensors for Humidity/Temperature and Barometric pressure.
+
+
 Now Features:
 
 1. Real Time Clock; used for 15 minute time interval, date and time stamping and dayofweek (every 7th day, log.txt file gets renamed to keep file size manageable. Every Saturday (7th day of week) log.txt gets renamed in the format "logxxyy” xx being the month and yy being the date; a new log.txt is created after file renaming.
