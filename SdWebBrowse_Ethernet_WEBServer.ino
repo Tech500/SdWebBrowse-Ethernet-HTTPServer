@@ -1,8 +1,8 @@
 /********************************************************************************  
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 30.2    ■                   Version 31, Formatted
-  ■  Last modified 2/28/2016 @ 06:04 EST    ■
+  ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 33, readFile Function added
+  ■  Last modified 6/29/2016 @ 17:29 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
   ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
@@ -155,7 +155,7 @@ SdFile file;
 
 int fileDownload;   //File download status; 1 = file download has started, 0 = file has finished downloading
 
-char myBuffer[13];
+char MyBuffer[13];
 
 // store error strings in flash to save RAM
 #define error(s) error_P(PSTR(s))
@@ -183,13 +183,13 @@ void setup(void)
   
     pinMode(sonalertPin, OUTPUT);  //Used for Piezo buzzer
 
-    pinMode(Q, INPUT);  //Pin monitoring status of 74HC73, J-K Flip-flop
-      
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     sd.begin(chipSelect);
 
     //if (!sd.begin(SPI_HALF_SPEED, chipSelect)) sd.initErrorHalt();
+    
+    Wire.begin();
 
     dht.begin();
 
@@ -223,8 +223,11 @@ void setup(void)
     //PgmPrintln("Files found in all dirs:");
     //root.ls(LS_R);
 
-    Serial.println();
+    Serial.println(); 
     //PgmPrintln("Done");
+    
+    EthernetClient client;
+    boolean alreadyConnected = false; // whether or not the client was connected previously
 
     // start the Ethernet connection and the server:
     Ethernet.begin(mac, ip1);
@@ -237,12 +240,13 @@ void setup(void)
     Serial.println("");
 
     getDateTime();
-    Serial.println("Connected to LAN:  " + dtStamp);
-    Serial.println(F("Listening for connections..."));
-  
-	value = digitalRead(Q); 
-	delay(500);
-
+    Serial.println("Connected to LAN:  ");
+      
+	delay(2500);
+	pinMode(Q, INPUT);  //Pin monitoring status of 74HC73, J-K Flip-flop
+	value = digitalRead(Q);
+	delay(250);	
+	
 	if((value) == 1) 
 	{
 
@@ -254,7 +258,7 @@ void setup(void)
 
 		serverFile.println("Watchdog Starting Server:  " + dtStamp);
 		serverFile.close();
-		Serial.print(" Watchdog  ");
+		Serial.print("Watchdog  ");
 		Serial.println(dtStamp + "  ");
 		//Serial.println(value);
 
@@ -274,9 +278,9 @@ void setup(void)
 		 
 		if (!serverFile.isOpen()) error("Manual Start Server");
 
-		serverFile.println("Manual Starting Server:  " + dtStamp);
+		serverFile.println("Starting Server:  " + dtStamp);
 		serverFile.close();  
-		Serial.print(" Manual  ");
+		Serial.print("Starting Server  ");
 		Serial.println(dtStamp + "  ");
 		//Serial.println(value);
 
@@ -287,7 +291,7 @@ void setup(void)
 
 	}
 
-
+	Serial.println(F("Listening for connections..."));
 
 	Serial.end();
  
@@ -480,7 +484,7 @@ void loop()
 void logtoSD()   //Output to SD Card every fifthteen minutes
 {
   
-	Serial.begin(9600);
+	Serial.begin(115200);
 
 
 	if((fileDownload) == 1)   //File download has started
@@ -604,15 +608,15 @@ void lcdDisplay()   //   LCD 1602 Display function
 void listen()   // Listen for client connection
 {
 
-	Serial.begin(9600);
+	Serial.begin(115200);
 
 	fileDownload = 0;   //No file being downloaded
 
 	EthernetClient client = server.available();
-	client.setTimeout(250);
+	//client.setClientTimeout(10000);
      
-    if (client) 
-    {
+		if (client) 
+		{
       
 		Serial.println("");
 		Serial.println(F("Client connected."));
@@ -671,7 +675,7 @@ void listen()   // Listen for client connection
 					SdFile logFile;
 					logFile.open("access.txt", O_WRITE | O_CREAT | O_APPEND);
 
-					if (!logFile.isOpen()) error("log");
+					if (!logFile.isOpen()) error("log");  
 
 					IPAddress ip1(10,0,0,15);  //Server ip address
 					IPAddress ip2(10,0,0,146);  //Host ip address
@@ -696,11 +700,11 @@ void listen()   // Listen for client connection
 
 			}     
 			// Check the action to see if it was a GET request.
-			if(strcmp(path, "/favicon.ico") == 0)
+			if(strncmp(path, "/favicon.ico", 12) == 0)
 			{
 			  
 				client.println("HTTP/1.1 200 OK"); //send new page
-				client.println("Content-Type: image/ico");
+				client.println("Content-Type: image/x-ico");
 				client.println("Connnection: close");
 				client.println();
 
@@ -813,11 +817,9 @@ void listen()   // Listen for client connection
 				client.println("<body />\r\n"); 
 				client.println("</html>\r\n");
 
-				exit; 
-
 			} 
 			// Check the action to see if it was a GET request.
-			else if (strcmp(path, "/SdBrowse") == 0) // Respond with the path that was accessed.  
+			else if (strcmp(path, "/SdBrowse") == 0) // Respond with the path that was accessed.    
 			{         
 
 				// send a standard http response header
@@ -835,153 +837,69 @@ void listen()   // Listen for client connection
 				client.println("<br />\r\n");
 				client.println("</html>\r\n");
 
-				delay(500);
-
-				exit;
-
-			}   
-			else if((strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0) || (strcmp(path, "/WATCHDOG.TXT") == 0)) // Respond with the path that was accessed. 
-			{ 
+				delay(500); 
 				
-				Serial.begin(9600);
-
-				static char MyBuffer[13];
-
+			}   
+			else if((strncmp(path, "/log.txt", 7) == 0) || (strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0)) // Respond with the path that was accessed. 
+			{ 
+			
 				char *filename;
 				char name;
-
-				{
 				strcpy( MyBuffer, path );
-				Serial.begin( 9600 );
 				filename = &MyBuffer[1];
-				//Serial.println(filename);
-				}
 				  
-					if (filename == "FAVICON.ICO")
+					if ((strncmp(path, "/FAVICON.ICO", 12) == 0) || (strncmp(path, "/SYSTEM~1", 9) == 0))
 					{
-					e	xit;
+					
+						client.println("HTTP/1.1 404 Not Found");
+						client.println("Content-Type: text/html");
+						client.println();
+						client.println("<h2>File Not Found!</h2>");
+						client.println("<br><h1>Couldn't open the File!</h3>");
+												
 					}
-
-
-				Serial.flush();
-
-
-				SdFile webFile;
-				if (! webFile.open(&root, filename, O_READ)) 
-				{ 
-
-					client.println("HTTP/1.1 404 Not Found");
-					client.println("Content-Type: text/html");
-					client.println();
-					client.println("<h2>File Not Found!</h2>");
-					client.println("<br><h1>Couldn't open the File!</h3>");
-					exit;
-				}
-
-				if (!webFile.isOpen()) error("text file");
-
+					
+				
 					client.println("HTTP/1.1 200 OK");
 
 					if(file.isDir()) 
 					{
-						Serial.println("is directory");
-						//file.close();
 						client.println("Content-Type: text/html");
 						client.println();
 						client.print("<h2>Files in /");
 						client.print(name);
 						client.println("/:</h2>");
-						ListFiles(client,LS_SIZE,file);
+						ListFiles(client,LS_SIZE,file); 
 						file.close();
 					}
-					else 
+					else  
 					{
-
-						fileDownload = 1;   //File download has started; used to stop logFile from logging during download
 
 						//client.println("Content-Type: text/plain");
 						client.println("Content-Type: text/plain");
 						client.println("Content-Disposition: attachment");
 						client.println("Content-Length:");
 						client.println();
+						
+						fileDownload = 1;   //File download has started
 
-						do   // @ adafruit_support_rick's do-while loop
-						{
-							int count = 0;
-							char buffers[BUFSIZE];
-							bool done = false;
-
-							while ((!done) && (count < BUFSIZE) && (webFile.available()))
-							{
-								char c = webFile.read();
-								if (0 > c)
-								done = true;
-								else
-								buffers[count++] = c;
-								delayMicroseconds(1000);
-							}
-
-							if (count)
-							client.write( buffers, count);
-
-						} while (webFile.available());
-
-
-						file.close();
+						readFile();
+						
 					}
-
-					fileDownload = 0;  //File download has finished; allow logging since download has completed
-
 			} 
 			// Check the action to see if it was a GET request.
-			else if ((strcmp(path, "/lucid-500.txt") == 0))   // Respond with the path that was accessed.                                                         
+			else if ((strncmp(path, "/ACCESS.TXT", 11) == 0))   // Respond with the path that was accessed.                                                         
 			{ 
-				
-				// Open ACCESS.TXT for reading
-				SdFile webFile;
-				webFile.open("ACCESS.TXT", O_READ);
 
-				if (!webFile.isOpen()) error("log");   
-					
+				char *filename;
+				char name;
+				strcpy( MyBuffer, path );
+				filename = &MyBuffer[1];
+				
 				fileDownload = 1;   //File download has started
 
-				client.println("HTTP/1.1 200 OK");
-				client.println("Content-Type: text/plain");                  
-				client.println("Content-Disposition: attachment");
-				client.println("Content-Length:");
-				client.println("Connnection: close");
-				client.println();
-
-				do   // @ adafruit_support_rick's do-while loop
-				{
-					int count = 0;
-					char buffers[BUFSIZE];
-					bool done = false;
-
-					while ((!done) && (count < BUFSIZE) && (webFile.available()))
-					{
-						char c = webFile.read();
-						if (0 > c)
-						done = true;
-						else
-						buffers[count++] = c;
-						delayMicroseconds(1000);
-					}
-
-					if (count)
-					client.write( buffers, count);
-				  
-				} while (webFile.available());
-
-				webFile.close();
-				  
-				fileDownload = 0;  //File download has finished
-
-				Serial.println("webFile Closed");
-				Serial.flush();
-
-
-				exit;
+				readFile();
+											
 			}
 			else 
 			{
@@ -992,7 +910,7 @@ void listen()   // Listen for client connection
 				client.println("<h2>404</h2>");
 				client.println("<h2>File Not Found!</h2>");
 			}
-			exit;
+			
 		} 
 		else 
 		{
@@ -1001,11 +919,9 @@ void listen()   // Listen for client connection
 			client.println("");
 
 		}
-		exit;      
-		
 		// Wait a short period to make sure the response had time to send before
 		// the connection is closed.
-		delay(1000);
+		delay(1);
 			  
 		// Close the connection when done.
 		Serial.println("Client closed");
@@ -1060,6 +976,52 @@ void parseFirstLine(char* line, char* action, char* path)
 	if (linepath != NULL)
 
 	strncpy(path, linepath, MAX_PATH);
+}
+
+///////////////
+void readFile()
+{
+
+	EthernetClient client = server.available(); 
+
+	// Open file for Reading.
+	SdFile webFile;
+	webFile.open(&root, &MyBuffer[1], O_READ);   
+
+	if (!webFile.isOpen()) error("readFile");
+
+	do   // @ adafruit_support_rick's do-while loop
+	{
+		int count = 0;
+		char buffers[BUFSIZE];
+		bool done = false;
+
+		while ((!done) && (count < BUFSIZE) && (webFile.available()))
+		{
+			char c = webFile.read();
+			if (0 > c)
+			done = true;
+			else
+			buffers[count++] = c;
+			delayMicroseconds(1000);
+		}
+
+		if (count)
+		client.write( buffers, count);
+
+	} while (webFile.available());
+
+	webFile.close();
+
+	fileDownload = 0;  //File download has finished; allow logging since download has completed
+
+	delay(500);
+
+	MyBuffer[0] = '\0';
+	
+		
+	
+  
 }
 
 ////////////////////////////////////////////
@@ -1229,7 +1191,7 @@ void newDay()   //Collect Data for twenty-four hours; then start a new day
 	SdFile logFile("log.txt", O_WRITE | O_CREAT | O_APPEND);
 	if (!logFile.isOpen()) error("log");
 	{
-		Serial.begin(9600);
+		Serial.begin(115200);
 
 		delay(1000);
 		logFile.println(", , , , , ,"); //Just a leading blank line, in case there was previous data
@@ -1282,7 +1244,7 @@ void fileStore()   //If 7th day of week, rename "log.txt" to ("log" + month + da
 	logFile.println("");
 	logFile.close();
 
-	Serial.begin(9600);
+	Serial.begin(115200);
 
 	Serial.println("");
 	Serial.println("New LOG.TXT created");
