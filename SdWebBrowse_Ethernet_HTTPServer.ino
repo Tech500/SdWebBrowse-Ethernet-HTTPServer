@@ -1,6 +1,6 @@
  /********************************************************************************  
 
-  ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
+  ■  SdWebBrowse_Ethernet_HTTPServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 33, readFile Function added
   ■  Last modified 6/29/2016 @ 19:40 EST    ■
   ■  Ethernet Shield version                ■
