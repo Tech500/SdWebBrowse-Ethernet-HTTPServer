@@ -2,7 +2,7 @@
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 33, readFile Function added
-  ■  Last modified 6/29/2016 @ 17:29 EST    ■
+  ■  Last modified 6/29/2016 @ 19:40 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
   ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
@@ -664,10 +664,7 @@ void listen()   // Listen for client connection
 			if((fileDownload) == 1)   //File download has started
 			{
 				exit;   //Skip logging this time --file download in progress
-			}
-			else  
-			{
-			  
+						  
 				if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")== 0))  //Log all server access except "favicon.ico"
 				{ 
 
@@ -700,47 +697,7 @@ void listen()   // Listen for client connection
 
 			}     
 			// Check the action to see if it was a GET request.
-			if(strncmp(path, "/favicon.ico", 12) == 0)
-			{
-			  
-				client.println("HTTP/1.1 200 OK"); //send new page
-				client.println("Content-Type: image/x-ico");
-				client.println("Connnection: close");
-				client.println();
-
-				// Open "FAVICON.ICO for reading
-				SdFile webFile;
-				webFile.open("FAVICON.ICO", O_READ);
-				if (!webFile.isOpen()) error("favicon.ico");
-
-				if (webFile.available()) 
-				{
-					byte clientBuf[64];
-					int clientCount = 0;
-
-					while(webFile.available())
-					{
-
-						clientBuf[clientCount] = webFile.read();
-						clientCount++;
-
-						if(clientCount > 63)
-						{
-						//Serial.println("Packet sent");
-						client.write(clientBuf,64);
-						clientCount = 0;
-						}
-					}
-					//final <64 byte cleanup packet
-
-					if(clientCount > 0) client.write(clientBuf,clientCount);           
-					// close the file:
-					webFile.close();
-				} 
-
-			}              
-			// Check the action to see if it was a GET request.
-			else if ((strcmp(path, "/Weather") == 0))   // Respond with the path that was accessed.                                                         
+			else if (strncmp(path, "/Weather", 8) == 0)   // Respond with the path that was accessed.                                                         
 			{ 
 			
 				// First send the success response code.
