@@ -1,8 +1,8 @@
- /********************************************************************************  
+/********************************************************************************  
 
-  ■  SdWebBrowse_Ethernet_HTTPServer.ino     ■
+  ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 33, readFile Function added
-  ■  Last modified 6/29/2016 @ 19:40 EST    ■
+  ■  Last modified 6/30/2016 @ 17:37 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
   ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
@@ -95,7 +95,22 @@ float currentPressure;  //Present pressure reading used to find pressure change 
 float pastPressure;  //Previous pressure reading used to find pressure change difference.
 float milliBars;
 
-float difference;
+float difference; 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  When using SwitchDoc Labs, "Dual Watchdog Time" >> After uploading Sketch; open Serial Monitor,  
+//  this will result in a "Watchdog" in the Serial Monitor output.  This is due to auto reset in
+//  the Serial Monitor output.  Pressing the red reset button will produce a Serial Monitor ouput of
+//  "Starting Server."  Any reset caused by SwitchDoc Labs, "Dual Watchdog Timer" will print "Watchdog"
+//  in the Serial Monitor output.  All resets are logged to Server.txt on the SD Card.
+//
+//  Remeber:  Opening  the Serial Monitor will cause "Watchdog" to be outputted on the Serial Monitor and logged 
+//  on the SD Card file:  Server.txt, included are date and time stamp.
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 #define RESET_WATCHDOG1 6  //SwitchDoc Labs external Watchdog Dual Timer
 
@@ -111,7 +126,6 @@ long int id = 1;  //Increments record number
 String dtStamp;
 String lastUpdate;
 String SMonth, SDay, SYear, SHour, SMin, SSec;
-String remoteAdress;
 
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
@@ -264,7 +278,7 @@ void setup(void)
 
 		//Sends LOW to RESET of the 74HC73, J-K Flip-flop 
 		digitalWrite(RESET, LOW);
-		delay(500);
+		delay(500);   
 		digitalWrite(RESET, HIGH);
 
 
@@ -286,7 +300,7 @@ void setup(void)
 
 		//Sends LOW to RESET of the 74HC73, J-K Flip-flop 
 		digitalWrite(RESET, LOW);
-		delay(500);
+		delay(500);  
 		digitalWrite(RESET, HIGH);
 
 	}
