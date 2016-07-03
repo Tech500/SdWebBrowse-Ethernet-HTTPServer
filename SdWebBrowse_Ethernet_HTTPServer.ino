@@ -2,7 +2,7 @@
 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 33, readFile Function added
-  ■  Last modified 6/30/2016 @ 17:37 EST    ■
+  ■  Last modified 7/3/2016 @ 00:09 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
   ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
@@ -100,14 +100,15 @@ float difference;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//  When using SwitchDoc Labs, "Dual Watchdog Time" >> After uploading Sketch; open Serial Monitor,  
-//  this will result in a "Watchdog" in the Serial Monitor output.  This is due to auto reset in
-//  the Serial Monitor output.  Pressing the red reset button will produce a Serial Monitor ouput of
-//  "Starting Server."  Any reset caused by SwitchDoc Labs, "Dual Watchdog Timer" will print "Watchdog"
-//  in the Serial Monitor output.  All resets are logged to Server.txt on the SD Card.
+//  Updated 7/3/2016
 //
-//  Remeber:  Opening  the Serial Monitor will cause "Watchdog" to be outputted on the Serial Monitor and logged 
-//  on the SD Card file:  Server.txt, included are date and time stamp.
+//  When using SwitchDoc Labs, "Dual Watchdog Time" >> After uploading Sketch; open Serial Monitor,  
+//  this will result in a "Starting Server" in the Serial Monitor output.  Pressing the red reset button will 
+//  produce a Serial Monitor ouput of "Starting Server."  Any reset caused by SwitchDoc Labs, "Dual Watchdog Timer" 
+//  will print "Watchdog" in the Serial Monitor output.  All resets are logged to "Server.txt" on the SD Card.
+//
+//  Remeber:  Opening  the Serial Monitor will cause "Starting Server" to be outputted on the Serial Monitor and logged 
+//  on the SD Card file:  "Server.txt," included are date and time stamp.
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -675,43 +676,9 @@ void listen()   // Listen for client connection
 			Serial.print(F("Path: ")); Serial.println(path); 
 
 
-			if((fileDownload) == 1)   //File download has started
-			{
-				exit;   //Skip logging this time --file download in progress
-						  
-				if((strcmp(path, "/Weather") == 0) || (strcmp(path, "/SdBrowse") == 0) || (! strcmp(path, "/favicon.ico")== 0))  //Log all server access except "favicon.ico"
-				{ 
-
-					// Open a "access.txt" for appended writing.   Client access ip address logged.
-					SdFile logFile;
-					logFile.open("access.txt", O_WRITE | O_CREAT | O_APPEND);
-
-					if (!logFile.isOpen()) error("log");  
-
-					IPAddress ip1(10,0,0,15);  //Server ip address
-					IPAddress ip2(10,0,0,146);  //Host ip address
-
-					//Do not log Host computer ip
-					if ((client.remoteIP() == ip2))   //Compare client ip address with Host ip address 
-					{
-						exit;
-					}
-					else
-					{
-						logFile.print("Accessed:  ");
-						getDateTime(); //get accessed date and time
-						logFile.print(dtStamp + " -- ");
-						logFile.print(client.remoteIP());
-						logFile.print(" -- ");
-						logFile.print("Path:  ");
-						logFile.println(path);
-						logFile.close();
-					}
-				}
-
-			}     
+			   
 			// Check the action to see if it was a GET request.
-			else if (strncmp(path, "/Weather", 8) == 0)   // Respond with the path that was accessed.                                                         
+			if (strncmp(path, "/Weather", 8) == 0)   // Respond with the path that was accessed.                                                         
 			{ 
 			
 				// First send the success response code.
@@ -811,7 +778,7 @@ void listen()   // Listen for client connection
 				delay(500); 
 				
 			}   
-			else if((strncmp(path, "/log.txt", 7) == 0) || (strncmp(path, "/LOG", 4) == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0)) // Respond with the path that was accessed. 
+			else if((strncmp(path, "/log.txt", 7) == 0) || (strncmp(path, "/LOG", 4) == 0) ||  (strcmp(path, "/ACCESS.TXT") == 0) || (strcmp(path, "/DIFFER.TXT") == 0)|| (strcmp(path, "/SERVER.TXT") == 0) || (strcmp(path, "/README.TXT") == 0)) // Respond with the path that was accessed. 
 			{ 
 			
 				char *filename;
@@ -819,22 +786,20 @@ void listen()   // Listen for client connection
 				strcpy( MyBuffer, path );
 				filename = &MyBuffer[1];
 				  
-					if ((strncmp(path, "/FAVICON.ICO", 12) == 0) || (strncmp(path, "/SYSTEM~1", 9) == 0))
+					if ((strncmp(path, "/FAVICON.ICO", 12) == 0) || (strncmp(path, "/SYSTEM~1", 9) == 0) || (strcmp(path, "/ACCESS.TXT") == 0))
 					{
 					
 						client.println("HTTP/1.1 404 Not Found");
 						client.println("Content-Type: text/html");
 						client.println();
+						client.println("<h2>404</h2>");
 						client.println("<h2>File Not Found!</h2>");
-						client.println("<br><h1>Couldn't open the File!</h3>");
-												
+						
 					}
-					
-				
-					client.println("HTTP/1.1 200 OK");
-
-					if(file.isDir()) 
+					else if(file.isDir()) 
 					{
+						
+						client.println("HTTP/1.1 200 OK");
 						client.println("Content-Type: text/html");
 						client.println();
 						client.print("<h2>Files in /");
@@ -843,10 +808,10 @@ void listen()   // Listen for client connection
 						ListFiles(client,LS_SIZE,file); 
 						file.close();
 					}
-					else  
+					else 
 					{
 
-						//client.println("Content-Type: text/plain");
+						client.println("HTTP/1.1 200 OK");
 						client.println("Content-Type: text/plain");
 						client.println("Content-Disposition: attachment");
 						client.println("Content-Length:");
@@ -858,20 +823,6 @@ void listen()   // Listen for client connection
 						
 					}
 			} 
-			// Check the action to see if it was a GET request.
-			else if ((strncmp(path, "/ACCESS.TXT", 11) == 0))   // Respond with the path that was accessed.                                                         
-			{ 
-
-				char *filename;
-				char name;
-				strcpy( MyBuffer, path );
-				filename = &MyBuffer[1];
-				
-				fileDownload = 1;   //File download has started
-
-				readFile();
-											
-			}
 			else 
 			{
 				// everything else is a 404
@@ -889,6 +840,36 @@ void listen()   // Listen for client connection
 			client.println("HTTP/1.1 405 Method Not Allowed");
 			client.println("");
 
+		}
+		if((fileDownload) == 1)   //File download has started
+		{
+			exit;   //Skip logging this time --file download in progress
+		}
+		else		
+		{		
+		
+			IPAddress ip1(10,0,0,15);  //Server ip address
+			IPAddress ip2(10,0,0,146);  //Host ip address
+
+			//Do not log Host computer ip
+			if ((client.remoteIP() != ip2))   //Compare client ip address with Host ip address 
+			{
+			
+				// Open a "access.txt" for appended writing.   Client access ip address logged.
+				SdFile logFile;
+				logFile.open("access.txt",  O_WRITE | O_CREAT | O_APPEND);
+				if (!logFile.isOpen()) error("log");
+				
+				getDateTime(); //get accessed date and time
+				
+				logFile.print("Accessed:  ");
+				logFile.print(dtStamp + " -- ");
+				logFile.print(client.remoteIP());
+				logFile.print(" -- ");
+				logFile.print("Path:  ");
+				logFile.println(path);
+				logFile.close();
+			}
 		}
 		// Wait a short period to make sure the response had time to send before
 		// the connection is closed.
