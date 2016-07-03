@@ -107,8 +107,7 @@ float difference;
 //  produce a Serial Monitor ouput of "Starting Server."  Any reset caused by SwitchDoc Labs, "Dual Watchdog Timer" 
 //  will print "Watchdog" in the Serial Monitor output.  All resets are logged to "Server.txt" on the SD Card.
 //
-//  Remeber:  Opening  the Serial Monitor will cause "Starting Server" to be outputted on the Serial Monitor and logged 
-//  on the SD Card file:  "Server.txt," included are date and time stamp.
+//  "Server.txt," Identifies RESET and includes date and time occurred.
 //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
