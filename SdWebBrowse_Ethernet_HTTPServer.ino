@@ -782,7 +782,7 @@ void listen()   // Listen for client connection
 			
 				char *filename;
 				char name;
-				strcpy( MyBuffer, path );
+				strcpy(MyBuffer, path);
 				filename = &MyBuffer[1];
 				  
 					if ((strncmp(path, "/FAVICON.ICO", 12) == 0) || (strncmp(path, "/SYSTEM~1", 9) == 0) || (strcmp(path, "/ACCESS.TXT") == 0))
@@ -821,7 +821,29 @@ void listen()   // Listen for client connection
 						readFile();
 						
 					}
-			} 
+			}
+			// Check the action to see if it was a GET request.
+			else if (strncmp(path, "/lucid", 6) == 0) // Respond with the path that was accessed.    
+			{         
+				
+				//Restricted file:  "ACCESS.TXT."  Attempted access from "Server Files:" results in 
+				//404 File not Found!  
+				
+				char *filename = "/ACCESS.TXT";
+				strcpy(MyBuffer, filename);
+																
+					// send a standard http response header
+					client.println("HTTP/1.1 200 OK");
+					client.println("Content-Type: text/plain");
+					client.println("Content-Disposition: attachment");
+					client.println("Content-Length:");
+					client.println();
+					
+					fileDownload = 1;   //File download has started
+
+					readFile();
+								
+			}   
 			else 
 			{
 				// everything else is a 404
@@ -844,7 +866,7 @@ void listen()   // Listen for client connection
 		{
 			exit;   //Skip logging this time --file download in progress
 		}
-		else		
+		else	  	
 		{		
 		
 			IPAddress ip1(10,0,0,15);  //Server ip address
@@ -938,7 +960,6 @@ void readFile()
 	// Open file for Reading.
 	SdFile webFile;
 	webFile.open(&root, &MyBuffer[1], O_READ);   
-
 	if (!webFile.isOpen()) error("readFile");
 
 	do   // @ adafruit_support_rick's do-while loop
