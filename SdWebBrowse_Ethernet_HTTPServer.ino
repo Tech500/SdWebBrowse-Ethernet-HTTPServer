@@ -1,8 +1,8 @@
 /********************************************************************************  
-
+ 
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
   ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 33, readFile Function added
-  ■  Last modified 7/3/2016 @ 00:09 EST    ■
+  ■  Last modified 7/5/2016 @ 15:14 EST     ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
   ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
@@ -11,8 +11,8 @@
   ■  Changed Ethernet library -- remoteIP.  ■     for keeping SwitchDoc Labs, "Dual Watchdog Timer" from sending RESET
   ■  Added logging of remoteIP.             ■     signal to Arduino Mega 2560.
   ■  Added viewing of remoteIP.             ■     
-  ■  Modified dht22 function                ■
-  ■                                         ■    
+  ■  Modified dht22 function                ■     Removed Delay of 2000 millisecons from DHT22 function; relaced with delay of 500 milliseconds.
+  ■                                         ■     Removed Delay of 500 milliseconds from dynamic web page; when reading DHT22.
   ■  Adapted by "tech500" with the          ■ 
   ■  help of "Adafruit Forum"               ■
 
@@ -711,9 +711,6 @@ void listen()   // Listen for client connection
 				client.println("Temperature:  ");
 				client.print(f);
 				client.print(" F.<br />");
-				// Reading temperature or humidity takes about 250 milliseconds!
-				// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-				delay(500);
 				client.println("Heat Index:  ");
 				client.print(hi);
 				client.print(" F. <br />");
@@ -1078,8 +1075,7 @@ String getDateTime()
 ////////////////
 float getDHT22()
 {
-	// Wait a few seconds between measurements.
-	delay(2000);
+	
 
 	// Reading temperature or humidity takes about 250 milliseconds!
 	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
@@ -1088,6 +1084,9 @@ float getDHT22()
 	t = dht.readTemperature();
 	// Read temperature as Fahrenheit
 	f = dht.readTemperature(true);
+	
+	// Wait a few seconds between measurements.
+	delay(500);
 
 	// Check if any reads failed and exit early (to try again).
 	if (isnan(h) || isnan(t) || isnan(f)) 
