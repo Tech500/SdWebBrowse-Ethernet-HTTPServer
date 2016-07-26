@@ -1,8 +1,8 @@
 /********************************************************************************  
  
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 33, readFile Function added
-  ■  Last modified 7/5/2016 @ 15:14 EST     ■
+  ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 36, Ability to cance downloaded file added.
+  ■  Last modified 7/25/2016 @ 15:36 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
   ■  change in Barometric Pressure.         ■           Dual Watchdog Timer"
@@ -28,7 +28,7 @@
 //   
 // *********************************************************************************   
  
-#include <SdFat.h>   //  https://github.com/greiman/SdFat 
+#include <SdFat.h>   //  https://github.com/greiman/SdFat
 #include <SdFile.h>   //  https://github.com/greiman/SdFat
 #include <SdFatUtil.h>   //  https://github.com/greiman/SdFat
 #include <Ethernet.h>  // https://github.com/per1234/EthernetMod  Special Ethernet library (client.remoteIP())
@@ -701,7 +701,6 @@ void listen()   // Listen for client connection
 				client.println("Last Update:  ");  
 				client.println(lastUpdate);
 				client.println(" EST <br />"); 
-				//delay(500);
 				client.println("Humidity:  ");
 				client.print(h, 2); 
 				client.print(" %<br />");
@@ -891,7 +890,7 @@ void listen()   // Listen for client connection
 		}
 		// Wait a short period to make sure the response had time to send before
 		// the connection is closed.
-		delay(1);
+		delay(100);
 			  
 		// Close the connection when done.
 		Serial.println("Client closed");
@@ -958,6 +957,8 @@ void readFile()
 	SdFile webFile;
 	webFile.open(&root, &MyBuffer[1], O_READ);   
 	if (!webFile.isOpen()) error("readFile");
+	
+	bool dload_Cancel = false;
 
 	do   // @ adafruit_support_rick's do-while loop
 	{
@@ -976,7 +977,15 @@ void readFile()
 		}
 
 		if (count)
-		client.write( buffers, count);
+		{
+			if (client.connected())
+			client.write( buffers, count);
+			else 
+			{
+				dload_Cancel = true;
+				break;
+			}
+		}
 
 	} while (webFile.available());
 
