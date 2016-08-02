@@ -1,4 +1,4 @@
-SdWebBrowse_Ethernet_WebServer.ino is a data logger and web server.  Current revision is dated July 5, 2016.
+SdWebBrowse_Ethernet_WebServer.ino is a data logger and web server.  Current revision is dated July 25, 2016.
 
 Requires Arduino Mega 2560, Ethernet Shield and Real time clock, and Sensors for Humidity/Temperature and Barometric pressure.
 
