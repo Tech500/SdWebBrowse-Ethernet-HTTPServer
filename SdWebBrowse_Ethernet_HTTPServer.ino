@@ -1,7 +1,7 @@
 /********************************************************************************  
  
   ■  SdWebBrowse_Ethernet_WEBServer.ino     ■
-  ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 36, Ability to cance downloaded file added.
+  ■  Using Arduino Mega 2560 --Rev. 33      ■                   Version 36, Ability to cancel downloaded file added.
   ■  Last modified 7/25/2016 @ 15:36 EST    ■
   ■  Ethernet Shield version                ■
   ■  Added Sonalert for difference of .020  ■     New:  74HC73, JK flip-flop used for monitoring status of "SwitchDoc Labs,
